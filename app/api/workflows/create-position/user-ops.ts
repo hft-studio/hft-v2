@@ -11,7 +11,8 @@ import { eq } from "drizzle-orm";
 import { encodeFunctionData } from "viem";
 import { bundlerClient } from "@/lib/bundler-client";
 import { getToken } from "@/lib/tokens";
-import { getTokenAmountFromSwapReceipt } from "./utils";
+import { getTokenAmountFromSwapReceipt, extractLpTokenInfoFromReceipt } from "./utils";
+import { getReceivedTokenAmount } from "../withdraw-position/utils";
 
 export async function balanceAssets(params: {
     poolId: number;
@@ -162,13 +163,12 @@ export async function depositInPool(params: {
         hash: approveOperation.userOpHash
     });
 
-    const lpTokenAmount: bigint = BigInt(receipt.logs[4].data);
-    const lpTokenAddress: string = receipt.logs[4].address;
+    const { lpTokenAddress, lpTokenAmount } = extractLpTokenInfoFromReceipt(receipt, params.smartAccount.address);
 
     return {
         txHash: approveOperation.userOpHash,
-        amount: lpTokenAmount,
-        lpTokenAddress: lpTokenAddress
+        amount: lpTokenAmount || BigInt(0),
+        lpTokenAddress: lpTokenAddress,
     };
 }
 

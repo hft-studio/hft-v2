@@ -69,35 +69,17 @@ export const { POST } = workflow.createWorkflow((step) => {
 			async (prevResult: {
 				context: WorkflowInput;
 				lpTokenAmount: string;
-				lpTokenAddress: string;
+				lpTokenAddress: string | undefined;
 			}) => {
 				const lpTokenAmount = prevResult.lpTokenAmount as string;
-				const lpTokenAddress = prevResult.lpTokenAddress as string;
-				console.log("lpTokenAmount", lpTokenAmount);
-				console.log("lpTokenAddress", lpTokenAddress);
+				const lpTokenAddress = prevResult.lpTokenAddress || "";
 				const { smartAccount } = await getAccount(prevResult.context.userId);
 				if (!smartAccount) {
 					throw new Error("Smart account not found");
 				}
-
-				// Safely convert lpTokenAmount to BigInt, handling different string formats
-				let parsedLpTokenAmount: bigint;
-				try {
-					// Remove any non-numeric characters (except for hex prefix)
-					const cleanedAmount = lpTokenAmount.startsWith("0x") 
-						? lpTokenAmount 
-						: lpTokenAmount.replace(/[^\d]/g, '');
-						
-					parsedLpTokenAmount = BigInt(cleanedAmount === "" ? "0" : cleanedAmount);
-					console.log("Parsed lpTokenAmount:", parsedLpTokenAmount.toString());
-				} catch (error) {
-					console.error("Error parsing lpTokenAmount:", error);
-					throw new Error(`Failed to parse lpTokenAmount: ${lpTokenAmount}`);
-				}
-
 				const gaugeDepositReceipt = await depositInGauge({
 					poolId: prevResult.context.poolId,
-					lpTokenAmount: parsedLpTokenAmount,
+					lpTokenAmount: BigInt(lpTokenAmount),
 					lpTokenAddress: lpTokenAddress,
 					smartAccount: smartAccount,
 				});

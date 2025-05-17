@@ -4,12 +4,15 @@ import { buildSwapCalls } from "@/lib/swap";
 import { base } from 'viem/chains';
 import { cdpClient } from "@/lib/cdp-client";
 import { bundlerClient } from "@/lib/bundler-client";
+import type{ TransactionReceipt } from "viem";
 import { createPublicClient, encodeFunctionData, http } from "viem";
 import { readContract } from "viem/actions";
 import { getToken } from "@/lib/tokens";
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { tokensTable } from "@/db/schema";
+import { ethers } from "ethers";
+import { formatUnits, parseUnits } from "ethers/lib/utils";
 
 const publicClient = createPublicClient({
     chain: base,
@@ -248,4 +251,58 @@ export async function sellAsset(params: {
         tokenInAddress: params.asset.address,
         amountIn: params.asset.amount
     }
+}
+
+
+export function getReceivedTokenAmount(
+  receipt: TransactionReceipt,
+  recipientAddress: string,
+  tokenAddress: string,
+  tokenDecimals: number
+): string | null {
+  // Normalize addresses to lowercase for comparison
+  console.log("receipt", receipt);
+  const recipient = recipientAddress.toLowerCase();
+  const token = tokenAddress.toLowerCase();
+  console.log("token", token);
+  console.log("recipient", recipient);
+  console.log("tokenDecimals", tokenDecimals);
+
+  // ERC-20 Transfer event topic: keccak256("Transfer(address,address,uint256)")
+  const transferTopic = '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef';
+
+  for (const log of receipt.logs) {
+    // Check if the log is from the token contract and is a Transfer event
+    if (log.address.toLowerCase() === token && log.topics[0] === transferTopic) {
+      // Ensure the log has enough topics (from, to, amount)
+      if (log.topics.length >= 3) {
+        // Extract the recipient address from topics[2] (padded to 32 bytes)
+        const topic2 = log.topics[2];
+        if (typeof topic2 === 'string') {
+          const toAddress = `0x${topic2.slice(-40).toLowerCase()}`;
+          
+          // Check if the recipient matches
+          if (toAddress === recipient) {
+            // Parse the amount from the data field
+            const amountHex = log.data;
+            try {
+              const amount = parseUnits(
+                formatUnits(
+                  BigInt(amountHex),
+                  tokenDecimals
+                ),
+                tokenDecimals
+              );
+              // Convert to human-readable format
+              return amount.toString();
+            } catch (error) {
+              console.error(`Error parsing amount from log: ${error}`);
+            }
+          }
+        }
+      }
+    }
+  }
+
+  return null;
 }

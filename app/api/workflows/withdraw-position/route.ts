@@ -7,6 +7,8 @@ import {
 	sellAsset,
 	getStakedBalance,
 } from "./user-ops";
+import { getReceivedTokenAmount } from "./utils";
+import { getPoolData } from "@/lib/pools";
 
 const workflow = new Workflow();
 
@@ -24,21 +26,20 @@ export const { POST } = workflow.createWorkflow((step) => {
 				throw new Error("Smart account not found");
 			}
 			const stakedBalance = await getStakedBalance(input.poolId, smartAccount);
-            console.log('stakedBalance', stakedBalance);
+			console.log("stakedBalance", stakedBalance);
 			if (stakedBalance > BigInt(0)) {
 				const withdrawFromGaugeReceipt = await withdrawFromGauge({
 					poolId: input.poolId,
 					smartAccount: smartAccount,
 					amount: stakedBalance,
 				});
-                
-			}else{
-                console.log('No staked balance');
-            }
+			} else {
+				console.log("No staked balance");
+			}
 
 			return {
-                context: input,
-            };
+				context: input,
+			};
 		})
 		.create(
 			async (input: {
@@ -48,6 +49,7 @@ export const { POST } = workflow.createWorkflow((step) => {
 				};
 			}) => {
 				const { smartAccount } = await getAccount(input.context.userId);
+				const poolData = await getPoolData(input.context.poolId);
 				if (!smartAccount) {
 					throw new Error("Smart account not found");
 				}
@@ -61,14 +63,26 @@ export const { POST } = workflow.createWorkflow((step) => {
 						smartAccount: smartAccount,
 						unstakedBalance: unstakedBalance,
 					});
+					const token0Amount = await getReceivedTokenAmount(
+						withdrawFromPoolReceipt.receipt,
+						smartAccount.address,
+						poolData?.token0Data.address as `0x${string}`,
+						poolData?.token0Data.decimals as number,
+					);
+					const token1Amount = await getReceivedTokenAmount(
+						withdrawFromPoolReceipt.receipt,
+						smartAccount.address,
+						poolData?.token1Data.address as `0x${string}`,
+						poolData?.token1Data.decimals as number,
+					);
 					const assets = [
 						{
-							address: withdrawFromPoolReceipt.logs[4].address,
-							amount: withdrawFromPoolReceipt.logs[4].data,
+							address: poolData?.token0Data.address as `0x${string}`,
+							amount: token0Amount,
 						},
 						{
-							address: withdrawFromPoolReceipt.logs[5].address,
-							amount: withdrawFromPoolReceipt.logs[5].data,
+							address: poolData?.token1Data.address as `0x${string}`,
+							amount: token1Amount,
 						},
 					];
 					return {
@@ -76,7 +90,7 @@ export const { POST } = workflow.createWorkflow((step) => {
 						assets: assets,
 					};
 				}
-				
+
 				console.log("No unstaked balance");
 				return {
 					context: input.context,
@@ -92,15 +106,21 @@ export const { POST } = workflow.createWorkflow((step) => {
 				};
 				assets: {
 					address: `0x${string}`;
-					amount: `0x${string}`;
+					amount: string | null;
 				}[];
 			}) => {
 				const { smartAccount } = await getAccount(input.context.userId);
 				if (!smartAccount) {
 					throw new Error("Smart account not found");
 				}
+				const parsedAssets = input.assets.map((asset) => {
+					return {
+						address: asset.address,
+						amount: asset.amount as string,
+					};
+				});
 				const soldAssets = await Promise.all(
-					input.assets.map(async (asset) => {
+					parsedAssets.map(async (asset) => {
 						const soldAsset = await sellAsset({
 							smartAccount: smartAccount,
 							asset: asset,

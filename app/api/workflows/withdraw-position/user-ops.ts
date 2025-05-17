@@ -10,6 +10,7 @@ import { db } from "@/db";
 import { eq } from "drizzle-orm";
 import { tokensTable } from "@/db/schema";
 import { getToken } from "@/lib/tokens";
+import { getTokenAmountFromSwapReceipt } from "../create-position/utils";
 const publicClient = createPublicClient({
     chain: base,
     transport: http(process.env.PAYMASTER_URL)
@@ -232,7 +233,7 @@ export async function sellAsset(params: {
     const swapReceipt = await bundlerClient.waitForUserOperationReceipt({
         hash: swapOperation.userOpHash
     });
-    const amount = BigInt(swapReceipt.logs[1].data);
+    const amount = await getTokenAmountFromSwapReceipt(swapReceipt, usdcToken.address as `0x${string}`, usdcToken.decimals as number);
     return {
         usdcAmount: amount.toString(),
         tokenInAddress: params.asset.address,
