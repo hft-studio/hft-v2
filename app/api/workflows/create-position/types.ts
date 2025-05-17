@@ -61,3 +61,26 @@ export const ERC20_ABI = [
         type: "function"
     }
 ];
+
+export interface TransactionReceipt {
+	logs: Array<{
+		address: string;
+		data: string;
+		topics: unknown[];
+		blockHash?: string;
+		blockNumber?: number | bigint;
+		transactionHash?: string;
+		transactionIndex?: number;
+		logIndex?: number;
+		removed?: boolean;
+	}>;
+	nonce?: string | bigint;
+	userOpHash?: string;
+	entryPoint?: string;
+	sender?: string;
+	actualGasCost?: string | bigint;
+	actualGasUsed?: string | bigint;
+	success?: boolean;
+	reason?: string;
+	receipt?: Record<string, unknown>;
+}

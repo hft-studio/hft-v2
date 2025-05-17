@@ -1,3 +1,11 @@
-import { providers } from "ethers";
+import { ethers } from "ethers";
 
-export const alchemyProvider = new providers.JsonRpcProvider(process.env.ALCHEMY_BASE_RPC_URL);
+if (!process.env.ALCHEMY_BASE_RPC_URL) {
+    throw new Error("ALCHEMY_BASE_RPC_URL is not set");
+}
+
+
+export const alchemyProvider = new ethers.providers.JsonRpcProvider({
+    url: process.env.ALCHEMY_BASE_RPC_URL,
+    skipFetchSetup: true,
+});

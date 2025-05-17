@@ -4,5 +4,5 @@ import { http } from "viem";
 
 export const bundlerClient = createBundlerClient({
     chain: base,
-    transport: http(process.env.ALCHEMY_BASE_RPC_URL),
+    transport: http(process.env.PAYMASTER_URL),
 });

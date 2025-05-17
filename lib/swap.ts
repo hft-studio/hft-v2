@@ -46,6 +46,9 @@ export async function generateRoute(params: {
 		deadline: Math.floor(Date.now() / 1000 + 1800),
 		type: SwapType.SWAP_ROUTER_02,
 	};
+    console.log('building route')
+    console.log('rawAmount', rawAmount);
+    console.log('tokenInToken', tokenInToken);
 
 	const route = await router.route(
 		CurrencyAmount.fromRawAmount(tokenInToken, rawAmount),
@@ -63,6 +66,7 @@ export async function buildSwapCalls(params: {
 	tokenOut: TokenData;
 	amount: bigint;
 }) {
+    console.log('amoutn in buildSwapCalls!!!!!!!!', params.amount);
 	const route = await generateRoute({
 		tokenIn: params.tokenIn,
 		tokenOut: params.tokenOut,
@@ -72,7 +76,7 @@ export async function buildSwapCalls(params: {
 	if (!route) {
 		throw new Error("No route found");
 	}
-
+    console.log('route', route);
 	const [approveCall] = buildApproveCalls({
 		tokens: [
 			{
@@ -87,9 +91,9 @@ export async function buildSwapCalls(params: {
 	const swapCall = {
 		to: route.methodParameters?.to as `0x${string}`,
 		data: route.methodParameters?.calldata as `0x${string}`,
-		value: BigInt(route.methodParameters?.value || 0),
+		value: BigInt(0),
 	};
 	const calls = [approveCall, swapCall];
-
+	console.log("calls", calls);
 	return calls;
 }

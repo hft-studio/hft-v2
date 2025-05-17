@@ -3,8 +3,10 @@ import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DepositModal } from "./deposit-modal";
+import { WithdrawModal } from "./withdraw-modal";
 import type { poolsTable } from "@/db/schema";
 import { createPosition } from "@/app/actions/create-position";
+import { withdrawPosition } from "@/app/actions/withdraw-position";
 
 interface PoolCardProps {
     pool: typeof poolsTable.$inferSelect;
@@ -12,6 +14,7 @@ interface PoolCardProps {
 
 export function PoolCard({ pool }: PoolCardProps) {
     const [isDepositModalOpen, setIsDepositModalOpen] = useState(false);
+    const [isWithdrawModalOpen, setIsWithdrawModalOpen] = useState(false);
     const formattedApr = `${Number.parseFloat(String(pool.apr)).toFixed(2)}%`;
     const tvlInMillions = `${(Number.parseFloat(String(pool.tvl)) / 1000000).toFixed(2)}M`;
     const formattedSymbol = pool.symbol.replace("vAMM-", "").replace("/", "-");
@@ -26,8 +29,21 @@ export function PoolCard({ pool }: PoolCardProps) {
     
     const handleDeposit = async (amount: string) => {
         console.log('deposit', amount);
-        const { workflowRunId } = await createPosition(pool.id, Number.parseFloat(amount));
+        await createPosition(pool.id, Number.parseFloat(amount));
         setIsDepositModalOpen(false);
+    };
+
+    const handleWithdraw = async () => {
+        await withdrawPosition(pool.id);
+        setIsWithdrawModalOpen(false);
+    };
+
+    const handleWithdrawClick = () => {
+        setIsWithdrawModalOpen(true);
+    };
+
+    const handleWithdrawModalClose = () => {
+        setIsWithdrawModalOpen(false);
     };
     
     return (
@@ -67,6 +83,12 @@ export function PoolCard({ pool }: PoolCardProps) {
                     >
                         Deposit
                     </Button>
+                    <Button
+                        className="w-full bg-white hover:bg-gray-100 text-black font-normal py-2 h-auto rounded-full text-sm transition-colors"
+                        onClick={handleWithdrawClick}
+                    >
+                        Withdraw
+                    </Button>
                 </div>
             </div>
             
@@ -75,6 +97,12 @@ export function PoolCard({ pool }: PoolCardProps) {
                 isOpen={isDepositModalOpen}
                 onClose={handleDepositModalClose}
                 onDeposit={handleDeposit}
+            />
+            <WithdrawModal
+                pool={pool}
+                isOpen={isWithdrawModalOpen}
+                onClose={handleWithdrawModalClose}
+                onWithdraw={handleWithdraw}
             />
         </>
     );
