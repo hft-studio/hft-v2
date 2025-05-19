@@ -2,18 +2,30 @@
 import React from 'react';
 import Image from 'next/image';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '../../components/ui/dropdown-menu';
-import { CircleUserIcon } from 'lucide-react';
+import { CircleUserIcon, ArrowUpIcon, ArrowDownIcon } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { useRouter } from 'next/navigation';
 import { signOut } from "next-auth/react"
 import { useSession } from 'next-auth/react';
 
-export const Navbar = () => {
+interface NavbarProps {
+    usdcAvailable?: string;
+}
+
+export const Navbar = ({ usdcAvailable }: NavbarProps = {}) => {
     const router = useRouter();
     const { data: session } = useSession();
     const handleSignOut = async () => {
         await signOut();
         router.push('/login');
+    };
+
+    const handleDeposit = () => {
+        window.open('https://www.coinbase.com/onramp', '_blank');
+    };
+
+    const handleWithdraw = () => {
+        window.open('https://www.coinbase.com/onramp', '_blank');
     };
 
     return (
@@ -35,7 +47,7 @@ export const Navbar = () => {
                                 </div>
                             </div>
                         </div>
-                        <div className="flex items-center space-x-6">
+                        <div className="flex items-center space-x-4">
                             <div className="hidden md:flex items-center space-x-5 mr-2">
                                 <a
                                     href="/feedback"
@@ -56,6 +68,36 @@ export const Navbar = () => {
                                     Docs
                                 </a>
                             </div>
+                            
+                            {usdcAvailable && (
+                                <div className="flex items-center space-x-2">
+                                    <div className="bg-gray-900 px-3 py-1.5 rounded-lg flex items-center">
+                                        <span className="text-green-400 font-medium">${usdcAvailable}</span>
+                                        <span className="text-gray-400 text-xs ml-1">USDC</span>
+                                    </div>
+                                    
+                                    <Button 
+                                        variant="ghost" 
+                                        size="sm" 
+                                        onClick={handleDeposit}
+                                        className="text-green-400 hover:text-green-300 hover:bg-gray-800 rounded-lg px-2"
+                                    >
+                                        <ArrowUpIcon className="h-4 w-4 mr-1" />
+                                        <span className="text-xs">Deposit</span>
+                                    </Button>
+                                    
+                                    <Button 
+                                        variant="ghost" 
+                                        size="sm" 
+                                        onClick={handleWithdraw}
+                                        className="text-red-400 hover:text-red-300 hover:bg-gray-800 rounded-lg px-2"
+                                    >
+                                        <ArrowDownIcon className="h-4 w-4 mr-1" />
+                                        <span className="text-xs">Withdraw</span>
+                                    </Button>
+                                </div>
+                            )}
+                            
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                     <Button variant="secondary" size="icon" className="rounded-full">

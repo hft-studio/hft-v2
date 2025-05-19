@@ -74,6 +74,8 @@ CREATE TABLE "pools" (
 	"network_id" integer NOT NULL,
 	"gauge_address" text NOT NULL,
 	"updated_at" timestamp NOT NULL,
+	"reserve0_usd" double precision NOT NULL,
+	"reserve1_usd" double precision NOT NULL,
 	"apr" double precision NOT NULL,
 	"tvl" double precision NOT NULL,
 	"volume" double precision NOT NULL
@@ -101,6 +103,16 @@ CREATE TABLE "wallets" (
 	"owner_address" text NOT NULL,
 	"smart_account_address" text NOT NULL,
 	"user_id" text NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "transactions" (
+	"key" varchar(255) PRIMARY KEY NOT NULL,
+	"hash" varchar(66) NOT NULL,
+	"lp_token_amount" text,
+	"lp_token_address" varchar(42),
+	"metadata" jsonb,
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"updated_at" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
 ALTER TABLE "account" ADD CONSTRAINT "account_userId_user_id_fk" FOREIGN KEY ("userId") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint

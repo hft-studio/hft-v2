@@ -27,6 +27,8 @@ export const updateAllPools = async () => {
             apr: poolDetails.apr,
             tvl: poolDetails.tvl,
             volume: poolDetails.volume,
+            reserve0_usd: poolDetails.reserve0_usd,
+            reserve1_usd: poolDetails.reserve1_usd,
         }).where(eq(poolsTable.address, pool.address))
     })
     await Promise.all(promises)

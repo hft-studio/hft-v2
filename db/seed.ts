@@ -56,6 +56,8 @@ async function main() {
             gauge_address: "0xEDC76895e053A9bbAC456B5a9c5B49144eee0080",
             apr: 0,
             tvl: 0,
+            reserve0_usd: 0,
+            reserve1_usd: 0,
             volume: 0,
             updated_at: new Date()
         }

@@ -33,6 +33,8 @@ export const poolsTable = pgTable("pools", {
     network_id: integer("network_id").notNull().references(() => networksTable.id),
     gauge_address: text("gauge_address").notNull(),
     updated_at: timestamp("updated_at").notNull(),
+    reserve0_usd: doublePrecision("reserve0_usd").notNull(),
+    reserve1_usd: doublePrecision("reserve1_usd").notNull(),
     apr: doublePrecision("apr").notNull(),
     tvl: doublePrecision("tvl").notNull(),
     volume: doublePrecision("volume").notNull()

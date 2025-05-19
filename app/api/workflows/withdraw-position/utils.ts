@@ -1,24 +1,17 @@
 import type { EvmSmartAccount } from "@coinbase/cdp-sdk";
 import { getPoolData } from "@/lib/pools";
 import { buildSwapCalls } from "@/lib/swap";
-import { base } from 'viem/chains';
 import { cdpClient } from "@/lib/cdp-client";
 import { bundlerClient } from "@/lib/bundler-client";
 import type{ TransactionReceipt } from "viem";
-import { createPublicClient, encodeFunctionData, http } from "viem";
+import { encodeFunctionData } from "viem";
 import { readContract } from "viem/actions";
 import { getToken } from "@/lib/tokens";
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { tokensTable } from "@/db/schema";
-import { ethers } from "ethers";
 import { formatUnits, parseUnits } from "ethers/lib/utils";
-
-const publicClient = createPublicClient({
-    chain: base,
-    transport: http(process.env.PAYMASTER_URL)
-});
-
+import { publicClient } from "@/lib/public-client";
 export const withdrawFromPool = async ({
     poolId,
     smartAccount,

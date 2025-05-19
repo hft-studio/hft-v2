@@ -1,5 +1,5 @@
 {
-  "id": "a9e7956a-0e55-4056-9c64-51279ae80bf5",
+  "id": "6fd4e5d9-1105-416c-a2ef-6724deaa263a",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -501,6 +501,18 @@
           "primaryKey": false,
           "notNull": true
         },
+        "reserve0_usd": {
+          "name": "reserve0_usd",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "reserve1_usd": {
+          "name": "reserve1_usd",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true
+        },
         "apr": {
           "name": "apr",
           "type": "double precision",
@@ -739,6 +751,63 @@
           "type": "text",
           "primaryKey": false,
           "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.transactions": {
+      "name": "transactions",
+      "schema": "",
+      "columns": {
+        "key": {
+          "name": "key",
+          "type": "varchar(255)",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "hash": {
+          "name": "hash",
+          "type": "varchar(66)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "lp_token_amount": {
+          "name": "lp_token_amount",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "lp_token_address": {
+          "name": "lp_token_address",
+          "type": "varchar(42)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "metadata": {
+          "name": "metadata",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
         }
       },
       "indexes": {},

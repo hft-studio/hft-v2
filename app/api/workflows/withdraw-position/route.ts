@@ -9,57 +9,30 @@ import {
 } from "./user-ops";
 import { getReceivedTokenAmount } from "./utils";
 import { getPoolData } from "@/lib/pools";
+import type { NextRequest } from "next/server";
 
-const workflow = new Workflow();
-
-type WorkflowInput = {
-	poolId: number;
-	userId: string;
-};
-
-export const { POST } = workflow.createWorkflow((step) => {
-	step
-		.create(async (prevResult) => {
-			const input = prevResult as unknown as WorkflowInput;
-			const { smartAccount } = await getAccount(input.userId);
-			if (!smartAccount) {
-				throw new Error("Smart account not found");
-			}
-			const stakedBalance = await getStakedBalance(input.poolId, smartAccount);
-			console.log("stakedBalance", stakedBalance);
-			if (stakedBalance > BigInt(0)) {
-				const withdrawFromGaugeReceipt = await withdrawFromGauge({
-					poolId: input.poolId,
-					smartAccount: smartAccount,
-					amount: stakedBalance,
-				});
-			} else {
-				console.log("No staked balance");
-			}
-
-			return {
-				context: input,
-			};
-		})
-		.create(
-			async (input: {
-				context: {
-					poolId: number;
-					userId: string;
-				};
-			}) => {
-				const { smartAccount } = await getAccount(input.context.userId);
-				const poolData = await getPoolData(input.context.poolId);
-				if (!smartAccount) {
-					throw new Error("Smart account not found");
-				}
-				const unstakedBalance = await getUnstakedBalance({
-					poolId: input.context.poolId,
-					smartAccount: smartAccount,
-				});
-				if (unstakedBalance > BigInt(0)) {
-					const withdrawFromPoolReceipt = await withdrawFromPool({
-						poolId: input.context.poolId,
+export const POST = async (req: NextRequest) => {
+	const { poolId, userId } = await req.json();
+	const { smartAccount } = await getAccount(userId);
+	const poolData = await getPoolData(poolId);
+	if (!smartAccount) {
+		throw new Error("Smart account not found");
+	}
+	const stakedBalance = await getStakedBalance(poolId, smartAccount);
+	if (stakedBalance > BigInt(0)) {
+		const withdrawFromGaugeReceipt = await withdrawFromGauge({
+			poolId: poolId,
+			smartAccount: smartAccount,
+			amount: stakedBalance,
+		});
+	}
+	const unstakedBalance = await getUnstakedBalance({
+		poolId: poolId,
+		smartAccount: smartAccount,
+	});
+	if (unstakedBalance > BigInt(0)) {
+		const withdrawFromPoolReceipt = await withdrawFromPool({
+			poolId: poolId,
 						smartAccount: smartAccount,
 						unstakedBalance: unstakedBalance,
 					});
@@ -78,60 +51,25 @@ export const { POST } = workflow.createWorkflow((step) => {
 					const assets = [
 						{
 							address: poolData?.token0Data.address as `0x${string}`,
-							amount: token0Amount,
+							amount: token0Amount as string,
 						},
 						{
 							address: poolData?.token1Data.address as `0x${string}`,
-							amount: token1Amount,
+							amount: token1Amount as string,
 						},
-					];
-					return {
-						context: input.context,
-						assets: assets,
-					};
-				}
+		        ];
 
-				console.log("No unstaked balance");
-				return {
-					context: input.context,
-					assets: [],
-				};
-			},
-		)
-		.create(
-			async (input: {
-				context: {
-					poolId: number;
-					userId: string;
-				};
-				assets: {
-					address: `0x${string}`;
-					amount: string | null;
-				}[];
-			}) => {
-				const { smartAccount } = await getAccount(input.context.userId);
-				if (!smartAccount) {
-					throw new Error("Smart account not found");
-				}
-				const parsedAssets = input.assets.map((asset) => {
-					return {
-						address: asset.address,
-						amount: asset.amount as string,
-					};
-				});
-				const soldAssets = await Promise.all(
-					parsedAssets.map(async (asset) => {
-						const soldAsset = await sellAsset({
-							smartAccount: smartAccount,
+		const soldAssets = await Promise.all(
+			assets.map(async (asset) => {
+				const soldAsset = await sellAsset({
+					smartAccount: smartAccount,
 							asset: asset,
 						});
-						return soldAsset;
-					}),
-				);
-				return {
-					context: input.context,
-					soldAssets: soldAssets,
-				};
-			},
+				return soldAsset;
+			}),
 		);
-});
+		return {
+			soldAssets: soldAssets,
+		};
+	}
+};

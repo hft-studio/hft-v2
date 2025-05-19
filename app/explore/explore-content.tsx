@@ -3,22 +3,26 @@ import { Header } from '@/components/layout/header';
 import { ContentContainer } from '@/components/layout/content-container';
 import { PoolCard } from './pool-card';
 import { Navbar } from '@/app/components/navbar';
-import type { getPools } from './utils';
+import type { getPositions } from '@/lib/positions';
 
 export function ExploreContent(
-    { pools }: { pools: Awaited<ReturnType<typeof getPools>> }
+    { positions, usdcAvailable }: { 
+        positions: Awaited<ReturnType<typeof getPositions>>,
+        usdcAvailable?: string 
+    }
 ) {
     return (
         <div className="min-h-screen bg-black text-white">
-            <Navbar />
+            <Navbar usdcAvailable={usdcAvailable} />
             <ContentContainer>
                 <Header title="Investment Dashboard" description="Manage your DeFi strategies and positions" />
+                
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {   pools
-                        .map(pool => (
+                    {   positions
+                        .map(position => (
                             <PoolCard 
-                                key={pool.address} 
-                                pool={pool} 
+                                key={position.pool.address} 
+                                position={position} 
                             />
                         ))}
                 </div>
