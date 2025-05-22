@@ -1,17 +1,12 @@
 import { db } from "@/db";
 import { poolsTable } from "@/db/schema/domain";
-import { createPublicClient } from "viem";
-import { http } from "viem";
 import { readContract } from "viem/actions";
-import { base } from "viem/chains";
+import { publicClient } from "./clients";
 
-const publicClient = createPublicClient({
-	chain: base,
-	transport: http(process.env.PAYMASTER_URL),
-});
 
 export const getPositions = async (smartAccountAddress: `0x${string}`) => {
 	const pools = await db.select().from(poolsTable);
+    console.log(pools);
 	const positions = await Promise.all(
 		pools.map(async (pool) => {
 			const [balance, totalSupply] = await Promise.all([

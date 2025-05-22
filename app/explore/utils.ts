@@ -1,7 +1,7 @@
 import { db } from "@/db";
 import { poolsTable } from "@/db/schema";
 import { readContract } from "viem/actions";
-import { publicClient } from "@/lib/public-client";
+import { publicClient } from "@/lib/clients";
 import { getToken } from "@/lib/tokens";
 import { formatUnits } from "ethers/lib/utils";
 export async function getPools() {

@@ -1,15 +1,7 @@
 import type { EvmSmartAccount } from "@coinbase/cdp-sdk";
 import { getPoolData } from "@/lib/pools";
-import { buildSwapCalls } from "@/lib/swap";
-import { cdpClient } from "@/lib/cdp-client";
-import { bundlerClient } from "@/lib/bundler-client";
-import { publicClient } from "@/lib/public-client";
+import { cdpClient, bundlerClient, publicClient } from "@/lib/clients";
 import { readContract } from "viem/actions";
-import { db } from "@/db";
-import { eq } from "drizzle-orm";
-import { tokensTable } from "@/db/schema";
-import { getToken } from "@/lib/tokens";
-import { getTokenAmountFromSwapReceipt } from "../create-position/utils";
 import { encodeFunctionData } from "viem";
 
 export const withdrawFromPool = async ({
@@ -41,13 +33,12 @@ export const withdrawFromPool = async ({
                 type: "function"
             }],
             functionName: "approve",
-            args: ["0xcf77a3ba9a5ca399b7c97c74d54e5b1beb874e43", unstakedBalance]
+            args: [poolData.swapExchangeData?.swap_address as `0x${string}`, unstakedBalance]
         })
     }]
 
-
     const removeLiquidityCalls = [{
-        to: "0xcf77a3ba9a5ca399b7c97c74d54e5b1beb874e43" as `0x${string}`,
+        to: poolData.swapExchangeData?.swap_address as `0x${string}`,
         data: encodeFunctionData({
             abi: [{
                 inputs: [
@@ -190,49 +181,3 @@ export const getStakedBalance = async (poolId: number, smartAccount: EvmSmartAcc
     return stakedBalance;
 }
 
-export async function sellAsset(params: {
-    smartAccount: EvmSmartAccount;
-    asset: {
-        address: string,
-        amount: string;
-    };
-}) {
-
-    const usdcToken = await getToken(1);
-    if (params.asset.address.toLowerCase() === usdcToken.address.toLowerCase()) {
-        return {
-            usdcAmount: params.asset.amount,
-            tokenInAddress: params.asset.address,
-            amountIn: params.asset.amount
-        }
-    }
-    const token = await db.query.tokensTable.findFirst({
-        where: eq(tokensTable.address, params.asset.address.toLowerCase())
-    });
-    if (!token) {
-        console.log('Token not found: ', params.asset.address);
-        throw new Error(`Token not found: ${params.asset.address}`);
-    }
-    const swapCalls = await buildSwapCalls({
-        smartAccount: params.smartAccount,
-        tokenIn: token,
-        tokenOut: usdcToken,
-        amount: BigInt(params.asset.amount)
-    });
-
-    const swapOperation = await cdpClient.evm.sendUserOperation({
-        smartAccount: params.smartAccount,
-        network: 'base',
-        calls: swapCalls,
-        paymasterUrl: process.env.PAYMASTER_URL,
-    });
-    const swapReceipt = await bundlerClient.waitForUserOperationReceipt({
-        hash: swapOperation.userOpHash
-    });
-    const amount = await getTokenAmountFromSwapReceipt(swapReceipt, usdcToken.address as `0x${string}`, usdcToken.decimals as number);
-    return {
-        usdcAmount: amount.toString(),
-        tokenInAddress: params.asset.address,
-        amountIn: params.asset.amount
-    }
-}

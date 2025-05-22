@@ -316,8 +316,7 @@ export function DepositModal({
             </div>
             
             <div className="space-y-3">
-              {/* Terms checkbox container - always takes up space regardless of tab */}
-              <div className="h-[52px]"> {/* Fixed height based on the checkbox container */}
+              <div className="h-[52px]">
                 {activeTab === 'deposit' && (
                   <div className="flex items-center space-x-2 mb-3 bg-gray-900/50 p-3 rounded-lg">
                     <input

@@ -1,5 +1,5 @@
-import { sellAsset } from "./app/api/workflows/withdraw-position/user-ops";
-import { getAccount } from "./lib/account";
+import { sellAsset } from "@/lib/swap";
+import { getAccount } from "@/lib/account";
 const { smartAccount } = await getAccount('c064667a-bb9f-4e10-afd6-0c2efd1fbfe2');
 if (!smartAccount) {
 	throw new Error("Smart account not found");

@@ -1,5 +1,5 @@
 {
-  "id": "6fd4e5d9-1105-416c-a2ef-6724deaa263a",
+  "id": "ba0929ea-cf50-412d-bf83-946e0d91a47d",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -329,6 +329,12 @@
           "primaryKey": false,
           "notNull": true
         },
+        "reward_token_id": {
+          "name": "reward_token_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
         "swap_router_address": {
           "name": "swap_router_address",
           "type": "text",
@@ -337,7 +343,21 @@
         }
       },
       "indexes": {},
-      "foreignKeys": {},
+      "foreignKeys": {
+        "exchanges_reward_token_id_tokens_id_fk": {
+          "name": "exchanges_reward_token_id_tokens_id_fk",
+          "tableFrom": "exchanges",
+          "tableTo": "tokens",
+          "columnsFrom": [
+            "reward_token_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
         "exchanges_name_unique": {
@@ -593,94 +613,6 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.positions": {
-      "name": "positions",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "integer",
-          "primaryKey": true,
-          "notNull": true,
-          "identity": {
-            "type": "always",
-            "name": "positions_id_seq",
-            "schema": "public",
-            "increment": "1",
-            "startWith": "1",
-            "minValue": "1",
-            "maxValue": "2147483647",
-            "cache": "1",
-            "cycle": false
-          }
-        },
-        "wallet_id": {
-          "name": "wallet_id",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "status": {
-          "name": "status",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false,
-          "default": 0
-        },
-        "amount_usdc": {
-          "name": "amount_usdc",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "pool_id": {
-          "name": "pool_id",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "user_id": {
-          "name": "user_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "positions_wallet_id_wallets_id_fk": {
-          "name": "positions_wallet_id_wallets_id_fk",
-          "tableFrom": "positions",
-          "tableTo": "wallets",
-          "columnsFrom": [
-            "wallet_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "positions_pool_id_pools_id_fk": {
-          "name": "positions_pool_id_pools_id_fk",
-          "tableFrom": "positions",
-          "tableTo": "pools",
-          "columnsFrom": [
-            "pool_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
     "public.tokens": {
       "name": "tokens",
       "schema": "",
@@ -712,6 +644,12 @@
         "chain_id": {
           "name": "chain_id",
           "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "product_id": {
+          "name": "product_id",
+          "type": "text",
           "primaryKey": false,
           "notNull": true
         }

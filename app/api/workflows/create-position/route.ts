@@ -1,96 +1,132 @@
 import { getAccount } from "@/lib/account";
-import { Workflow } from "@/lib/workflow";
 import { balanceAssets, depositInPool, depositInGauge } from "./user-ops";
 import { ethers } from "ethers";
+import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
+import { sellAsset } from "@/lib/swap";
+import { getRawBalance } from "@/lib/erc20";
+import {
+	getStakedBalance,
+	withdrawFromPool,
+} from "../withdraw-position/user-ops";
+import { getUnstakedBalance } from "../withdraw-position/user-ops";
+import { withdrawFromGauge } from "../withdraw-position/user-ops";
+import { getPoolData } from "@/lib/pools";
+const API_KEY = process.env.WORKFLOW_API_KEY;
+if (!API_KEY) {
+	throw new Error("WORKFLOW_API_KEY is not defined");
+}
 
-// Define our workflow input type
-type WorkflowInput = {
+type CreatePositionInput = {
 	poolId: number;
 	usdcAmount: number;
 	smartAccountAddress: string;
 	userId: string;
 };
 
-const workflow = new Workflow();
+export async function POST(request: NextRequest) {
+	const accessToken = request.headers.get("x-access-token");
+	if (accessToken !== API_KEY) {
+		return NextResponse.json(
+			{ error: "Invalid access token" },
+			{ status: 401 },
+		);
+	}
+	const input: CreatePositionInput = await request.json();
 
-export const { POST } = workflow.createWorkflow((step) => {
-	step
-		.create(async (prevResult) => {
-			const input = prevResult as unknown as WorkflowInput;
+	const { smartAccount } = await getAccount(input.userId);
 
-			const rawUsdcAmount = ethers.utils
-				.parseUnits(input.usdcAmount.toString(), 6)
-				.toBigInt();
-			const { smartAccount } = await getAccount(input.userId);
-			console.log("smartAccount", smartAccount?.address);
-			if (!smartAccount) {
-				throw new Error("Smart account not found");
-			}
-
-			const assets = await balanceAssets({
-				poolId: input.poolId,
-				usdcAmount: rawUsdcAmount,
-				smartAccount: smartAccount,
-			});
-
-			return {
-				assets: assets.map((asset) => ({
-					tokenId: asset.tokenId ?? 0,
-					amount: asset.amount.toString(),
-				})),
-				context: input,
-			};
-		})
-		.create(async (input) => {
-			console.log(input.assets);
-			const rawAssets = input.assets.map((asset) => ({
-				tokenId: asset.tokenId,
-				amount: BigInt(asset.amount === "0x" ? "0" : asset.amount),
-			}));
-
-			const { smartAccount } = await getAccount(input.context.userId);
-			if (!smartAccount) {
-				throw new Error("Smart account not found");
-			}
-
-			const lpTokenResult = await depositInPool({
-				poolId: input.context.poolId,
-				assets: rawAssets,
-				smartAccount: smartAccount,
-			});
-
-			return {
-				context: input.context,
-				lpTokenAmount: lpTokenResult.amount.toString(),
-				lpTokenAddress: lpTokenResult.lpTokenAddress,
-			};
-		})
-		.create(
-			async (prevResult: {
-				context: WorkflowInput;
-				lpTokenAmount: string;
-				lpTokenAddress: string | undefined;
-			}) => {
-				const lpTokenAmount = prevResult.lpTokenAmount as string;
-				const lpTokenAddress = prevResult.lpTokenAddress || "";
-				const { smartAccount } = await getAccount(prevResult.context.userId);
-				if (!smartAccount) {
-					throw new Error("Smart account not found");
-				}
-				const gaugeDepositReceipt = await depositInGauge({
-					poolId: prevResult.context.poolId,
-					lpTokenAmount: BigInt(lpTokenAmount),
-					lpTokenAddress: lpTokenAddress,
-					smartAccount: smartAccount,
-				});
-
-				return {
-					context: prevResult.context,
-					successful: true,
-				};
-			},
-		)
-		.finally((result) => {
-			console.log("Position creation workflow completed with result:", result);
+	if (!smartAccount) {
+		return NextResponse.json(
+			{ error: "Smart account not found" },
+			{ status: 400 },
+		);
+	}
+	let step = 0;
+	try {
+		const assets = await balanceAssets({
+			poolId: input.poolId,
+			usdcAmount: input.usdcAmount.toString(),
+			smartAccount: smartAccount,
 		});
-});
+		step = 1;
+		const { amount, lpTokenAddress } = await depositInPool({
+			poolId: input.poolId,
+			assets: assets,
+			smartAccount: smartAccount,
+		});
+		step = 2;
+		const gaugeDepositReceipt = await depositInGauge({
+			poolId: input.poolId,
+			lpTokenAmount: amount,
+			lpTokenAddress: lpTokenAddress,
+			smartAccount: smartAccount,
+		});
+		step = 3;
+		return NextResponse.json({
+			successful: true,
+			lpTokenAmount: amount.toString(),
+			lpTokenAddress,
+			gaugeDepositTxHash: gaugeDepositReceipt.userOpHash,
+		});
+	} catch (error) {
+		console.error("Error creating position:", error);
+		const stakedBalance = await getStakedBalance(input.poolId, smartAccount);
+		if (stakedBalance > BigInt(0)) {
+			const withdrawFromGaugeReceipt = await withdrawFromGauge({
+				poolId: input.poolId,
+				smartAccount: smartAccount,
+				amount: stakedBalance,
+			});
+		}
+		const unstakedBalance = await getUnstakedBalance({
+			poolId: input.poolId,
+			smartAccount: smartAccount,
+		});
+		if (unstakedBalance > BigInt(0)) {
+			const withdrawFromPoolReceipt = await withdrawFromPool({
+				poolId: input.poolId,
+				smartAccount: smartAccount,
+				unstakedBalance: unstakedBalance,
+			});
+		}
+		const poolData = await getPoolData(input.poolId);
+		const [token0Amount, token1Amount] = await Promise.all([
+			getRawBalance(
+				poolData?.token0Data.address as `0x${string}`,
+				smartAccount.address,
+			),
+			getRawBalance(
+				poolData?.token1Data.address as `0x${string}`,
+				smartAccount.address,
+			),
+		]);
+		const assets = [
+			{
+				address: poolData?.token0Data.address as `0x${string}`,
+				amount: token0Amount.toString(),
+			},
+			{
+				address: poolData?.token1Data.address as `0x${string}`,
+				amount: token1Amount.toString(),
+			},
+		];
+
+		const soldAssets = await Promise.all(
+			assets.map(async (asset) => {
+				const soldAsset = await sellAsset({
+					smartAccount: smartAccount,
+					asset: asset,
+				});
+				return soldAsset;
+			}),
+		);
+		return NextResponse.json(
+			{
+				error: (error as Error).message || "Failed to create position",
+				step: 0,
+			},
+			{ status: 500 },
+		);
+	}
+}

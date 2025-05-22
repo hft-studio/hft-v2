@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, jsonb, timestamp, doublePrecision } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, doublePrecision } from "drizzle-orm/pg-core";
 
 export const wallets = pgTable("wallets", {
     id: serial("id").primaryKey(),
@@ -19,6 +19,7 @@ export const exchangesTable = pgTable("exchanges", {
     id: serial("id").primaryKey(),
     name: text("name").notNull().unique(),
     type: text("type").notNull(),
+    reward_token_id: integer("reward_token_id").notNull().references(() => tokensTable.id),
     swap_address: text("swap_router_address").notNull(),
 });
 
@@ -40,19 +41,12 @@ export const poolsTable = pgTable("pools", {
     volume: doublePrecision("volume").notNull()
 });
 
-export const positionsTable = pgTable("positions", {
-    id: integer("id").generatedAlwaysAsIdentity().primaryKey(),
-    wallet_id: integer("wallet_id").notNull().references(() => wallets.id),
-    status: integer("status").default(0),
-    amount_usdc: integer("amount_usdc").notNull(),
-    pool_id: integer("pool_id").notNull().references(() => poolsTable.id),
-    user_id: text("user_id").notNull(),
-});
-
 export const tokensTable = pgTable("tokens", {
     id: serial("id").primaryKey(),
     address: text("address").notNull(),
     symbol: text("symbol").notNull(),
     decimals: integer("decimals").notNull(),
     chain_id: integer("chain_id").notNull(),
+    product_id: text("product_id").notNull(),
 });
+

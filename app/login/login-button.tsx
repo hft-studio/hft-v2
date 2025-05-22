@@ -2,13 +2,12 @@
 import { signIn } from 'next-auth/react';
 import { Button } from '@/components/ui/button';
 
-export const LoginButton = () => {
+export const SignInButton = () => {
 
   const handleSignInWithCoinbase = async () => {
-    await signIn('coinbase');
+    await signIn('coinbase', { callbackUrl: '/explore' });
   };
-
   return (
-      <Button className='mx-auto w-64 rounded-full' onClick={handleSignInWithCoinbase} >Connect with Coinbase</Button>
+      <Button size='lg' className='font-medium px-8 py-6 w-full rounded-xl' variant={'secondary'} onClick={handleSignInWithCoinbase} >Connect with Coinbase</Button>
   );
 }

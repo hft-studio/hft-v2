@@ -7,8 +7,12 @@ import type {
 import { TradeType, CurrencyAmount, Percent, Token } from "@uniswap/sdk-core";
 import type { EvmSmartAccount } from "@coinbase/cdp-sdk";
 import { buildApproveCalls } from "./erc20";
-import type { tokensTable } from "@/db/schema";
-import { alchemyProvider } from "./alchemy-providers";
+import { alchemyProvider, bundlerClient, cdpClient } from "./clients";
+import { getTokenAmountFromSwapReceipt } from "@/app/api/workflows/create-position/utils";
+import { db } from "@/db";
+import { eq } from "drizzle-orm";
+import { tokensTable } from "@/db/schema";
+import { getToken } from "./tokens";
 
 type TokenData = typeof tokensTable.$inferSelect;
 
@@ -46,9 +50,6 @@ export async function generateRoute(params: {
 		deadline: Math.floor(Date.now() / 1000 + 1800),
 		type: SwapType.SWAP_ROUTER_02,
 	};
-    console.log('building route')
-    console.log('rawAmount', rawAmount);
-    console.log('tokenInToken', tokenInToken);
 
 	const route = await router.route(
 		CurrencyAmount.fromRawAmount(tokenInToken, rawAmount),
@@ -66,7 +67,6 @@ export async function buildSwapCalls(params: {
 	tokenOut: TokenData;
 	amount: bigint;
 }) {
-    console.log('amoutn in buildSwapCalls!!!!!!!!', params.amount);
 	const route = await generateRoute({
 		tokenIn: params.tokenIn,
 		tokenOut: params.tokenOut,
@@ -76,13 +76,10 @@ export async function buildSwapCalls(params: {
 	if (!route) {
 		throw new Error("No route found");
 	}
-    console.log('route', route);
 	const [approveCall] = buildApproveCalls({
 		tokens: [
 			{
 				address: params.tokenIn.address,
-				symbol: params.tokenIn.symbol,
-				decimals: params.tokenIn.decimals,
 				amount: params.amount,
 			},
 		],
@@ -94,6 +91,51 @@ export async function buildSwapCalls(params: {
 		value: BigInt(0),
 	};
 	const calls = [approveCall, swapCall];
-	console.log("calls", calls);
 	return calls;
+}
+
+export async function sellAsset(params: {
+    smartAccount: EvmSmartAccount;
+    asset: {
+        address: string,
+        amount: string;
+    };
+}) {
+
+    const usdcToken = await getToken(1);
+    if (params.asset.address.toLowerCase() === usdcToken.address.toLowerCase()) {
+        return {
+            usdcAmount: params.asset.amount,
+            tokenInAddress: params.asset.address,
+            amountIn: params.asset.amount
+        }
+    }
+    const token = await db.query.tokensTable.findFirst({
+        where: eq(tokensTable.address, params.asset.address.toLowerCase())
+    });
+    if (!token) {
+        throw new Error(`Token not found: ${params.asset.address}`);
+    }
+    const swapCalls = await buildSwapCalls({
+        smartAccount: params.smartAccount,
+        tokenIn: token,
+        tokenOut: usdcToken,
+        amount: BigInt(params.asset.amount)
+    });
+
+    const swapOperation = await cdpClient.evm.sendUserOperation({
+        smartAccount: params.smartAccount,
+        network: 'base',
+        calls: swapCalls,
+        paymasterUrl: process.env.PAYMASTER_URL,
+    });
+    const swapReceipt = await bundlerClient.waitForUserOperationReceipt({
+        hash: swapOperation.userOpHash
+    });
+    const amount = await getTokenAmountFromSwapReceipt(swapReceipt, usdcToken.address as `0x${string}`, usdcToken.decimals as number);
+    return {
+        usdcAmount: amount.toString(),
+        tokenInAddress: params.asset.address,
+        amountIn: params.asset.amount
+    }
 }

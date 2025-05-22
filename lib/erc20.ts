@@ -1,45 +1,91 @@
-import { encodeFunctionData } from "viem";
+import { encodeFunctionData, erc20Abi } from "viem";
+import { readContract, writeContract } from "viem/actions";
+import { bundlerClient, cdpClient, publicClient } from "./clients";
+import type { EvmSmartAccount } from "@coinbase/cdp-sdk";
 
-export const ERC20_ABI = [
-    {
-        inputs: [
-            { name: "spender", type: "address" },
-            { name: "amount", type: "uint256" }
-        ],
-        name: "approve",
-        outputs: [{ name: "", type: "bool" }],
-        stateMutability: "nonpayable",
-        type: "function"
-    }
-];
-
-
-export function buildApproveCalls(
-    params: {
-        tokens: {
-            address: string;
-            symbol: string;
-            decimals: number;
-            amount: bigint;
-        }[];
-        spenderAddress: string;
-    },
-) {
-    try {
-        const calls = params.tokens.map((token, index) => {
-            return {
-                to: token.address as `0x${string}`,
-                data: encodeFunctionData({
-                    abi: ERC20_ABI,
-                    functionName: "approve",
-                    args: [params.spenderAddress, token.amount],
-                }),
-                value: BigInt(0),
-            };
-        });
-        return calls;
-    } catch (error) {
-        console.error('Error in buildApproveCalls:', error);
-        throw error;
-    }
+export function buildApproveCalls(params: {
+	tokens: {
+		address: string;
+		amount: bigint;
+	}[];
+	spenderAddress: string;
+}) {
+	const calls = params.tokens.map((token) => {
+		return {
+			to: token.address as `0x${string}`,
+			data: encodeFunctionData({
+				abi: [
+					{
+						inputs: [
+							{ name: "spender", type: "address" },
+							{ name: "amount", type: "uint256" },
+						],
+						name: "approve",
+						outputs: [{ name: "", type: "bool" }],
+						stateMutability: "nonpayable",
+						type: "function",
+					},
+				],
+				functionName: "approve",
+				args: [params.spenderAddress as `0x${string}`, token.amount],
+			}),
+			value: BigInt(0),
+		};
+	});
+	return calls;
 }
+
+export const getRawBalance = async (
+	tokenAddress: `0x${string}`,
+	acountAddress: `0x${string}`,
+) => {
+	const balance = await readContract(publicClient, {
+		address: tokenAddress,
+		abi: [
+			{
+				inputs: [{ name: "account", type: "address" }],
+				name: "balanceOf",
+				outputs: [{ name: "", type: "uint256" }],
+				stateMutability: "view",
+				type: "function",
+			},
+		],
+		functionName: "balanceOf",
+		args: [acountAddress],
+	});
+	return balance;
+};
+
+export const transfer = async (
+	tokenAddress: `0x${string}`,
+	to: `0x${string}`,
+	amount: bigint,
+	smartAccount: EvmSmartAccount,
+) => {
+	const calls = [
+		{
+			to: tokenAddress,
+			data: encodeFunctionData({
+				abi: erc20Abi,
+				functionName: "transfer",
+				args: [to, amount],
+			}),
+			value: BigInt(0),
+		},
+	];
+
+	const result = await cdpClient.evm.sendUserOperation({
+		smartAccount: smartAccount,
+		network: "base",
+	    calls,
+		paymasterUrl: process.env.PAYMASTER_URL,
+	});
+	const receipt = await bundlerClient.waitForUserOperationReceipt({
+		hash: result.userOpHash,
+	});
+
+	return {
+		success: receipt.success,
+		txHash: result.userOpHash,
+	};
+};

@@ -8,6 +8,7 @@ export default async function Home() {
   if (!session?.user?.id) {
     throw new Error("Unauthorized");
   }
+
   const {owner, smartAccount} = await getAccount(session.user.id);
 	const positions = await getPositions(
 		smartAccount?.address as `0x${string}`,

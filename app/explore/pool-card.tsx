@@ -6,13 +6,14 @@ import { DepositModal } from "./deposit-modal";
 import { createPosition } from "@/app/actions/create-position";
 import { withdrawPosition } from "@/app/actions/withdraw-position";
 import type { getPositions } from "@/lib/positions";
-
+import { useRouter } from "next/navigation";
 interface PoolCardProps {
 	position: Awaited<ReturnType<typeof getPositions>>[number];
 }
 
 export function PoolCard({ position }: PoolCardProps) {
 	const [isModalOpen, setIsModalOpen] = useState(false);
+	const router = useRouter();
 	const formattedApr = `${Number.parseFloat(String(position.pool.apr)).toFixed(2)}%`;
 	const tvlInMillions = `${(Number.parseFloat(String(position.pool.tvl)) / 1000000).toFixed(2)}M`;
 	const formattedSymbol = position.pool.symbol
@@ -34,11 +35,13 @@ export function PoolCard({ position }: PoolCardProps) {
 		console.log("deposit", amount);
 		await createPosition(position.pool.id, Number.parseFloat(amount));
 		setIsModalOpen(false);
+		router.refresh();
 	};
 
 	const handleWithdraw = async () => {
 		await withdrawPosition(position.pool.id);
 		setIsModalOpen(false);
+		router.refresh();
 	};
 
 	return (

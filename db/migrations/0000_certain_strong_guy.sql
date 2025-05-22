@@ -49,6 +49,7 @@ CREATE TABLE "exchanges" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"name" text NOT NULL,
 	"type" text NOT NULL,
+	"reward_token_id" integer NOT NULL,
 	"swap_router_address" text NOT NULL,
 	CONSTRAINT "exchanges_name_unique" UNIQUE("name")
 );
@@ -81,21 +82,13 @@ CREATE TABLE "pools" (
 	"volume" double precision NOT NULL
 );
 --> statement-breakpoint
-CREATE TABLE "positions" (
-	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "positions_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
-	"wallet_id" integer NOT NULL,
-	"status" integer DEFAULT 0,
-	"amount_usdc" integer NOT NULL,
-	"pool_id" integer NOT NULL,
-	"user_id" text NOT NULL
-);
---> statement-breakpoint
 CREATE TABLE "tokens" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"address" text NOT NULL,
 	"symbol" text NOT NULL,
 	"decimals" integer NOT NULL,
-	"chain_id" integer NOT NULL
+	"chain_id" integer NOT NULL,
+	"product_id" text NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "wallets" (
@@ -118,11 +111,10 @@ CREATE TABLE "transactions" (
 ALTER TABLE "account" ADD CONSTRAINT "account_userId_user_id_fk" FOREIGN KEY ("userId") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "authenticator" ADD CONSTRAINT "authenticator_userId_user_id_fk" FOREIGN KEY ("userId") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "session" ADD CONSTRAINT "session_userId_user_id_fk" FOREIGN KEY ("userId") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "exchanges" ADD CONSTRAINT "exchanges_reward_token_id_tokens_id_fk" FOREIGN KEY ("reward_token_id") REFERENCES "public"."tokens"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "networks" ADD CONSTRAINT "networks_swap_exchange_id_exchanges_id_fk" FOREIGN KEY ("swap_exchange_id") REFERENCES "public"."exchanges"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "networks" ADD CONSTRAINT "networks_usdc_token_id_tokens_id_fk" FOREIGN KEY ("usdc_token_id") REFERENCES "public"."tokens"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "pools" ADD CONSTRAINT "pools_exchange_id_exchanges_id_fk" FOREIGN KEY ("exchange_id") REFERENCES "public"."exchanges"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "pools" ADD CONSTRAINT "pools_token0_tokens_id_fk" FOREIGN KEY ("token0") REFERENCES "public"."tokens"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "pools" ADD CONSTRAINT "pools_token1_tokens_id_fk" FOREIGN KEY ("token1") REFERENCES "public"."tokens"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "pools" ADD CONSTRAINT "pools_network_id_networks_id_fk" FOREIGN KEY ("network_id") REFERENCES "public"."networks"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "positions" ADD CONSTRAINT "positions_wallet_id_wallets_id_fk" FOREIGN KEY ("wallet_id") REFERENCES "public"."wallets"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "positions" ADD CONSTRAINT "positions_pool_id_pools_id_fk" FOREIGN KEY ("pool_id") REFERENCES "public"."pools"("id") ON DELETE no action ON UPDATE no action;
+ALTER TABLE "pools" ADD CONSTRAINT "pools_network_id_networks_id_fk" FOREIGN KEY ("network_id") REFERENCES "public"."networks"("id") ON DELETE no action ON UPDATE no action;

@@ -8,23 +8,33 @@ async function main() {
             address: '0x833589fcd6edb6e08f4c7c32d4f71b54bda02913',
             symbol: 'USDC',
             chain_id: 8453,
-            decimals: 6
+            decimals: 6,
+            product_id: 'USDC-USD'
         },
         {
             address: '0xcbb7c0000ab88b473b1f5afd9ef808440eed33bf',
             symbol: 'cbBTC',
             chain_id: 8453,
-            decimals: 8
+            decimals: 8,
+            product_id: 'BTC-USD'
+        },
+        {
+            address: '0x940181a94a35a4569e4529a3cdfb74e38fd98631',
+            symbol: 'AERO',
+            chain_id: 8453,
+            decimals: 18,
+            product_id: 'AERO-USD'
         }
     ]).returning({ id: tokensTable.id });
 
-    const [usdcId, cbBtcId] = tokensResult.map(token => token.id);
+    const [usdcId, cbBtcId, aerodromeId] = tokensResult.map(token => token.id);
 
     const exchangeResult = await db.insert(exchangesTable).values([
         {
             name: 'aerodrome',
             swap_address: "0xcf77a3ba9a5ca399b7c97c74d54e5b1beb874e43",
-            type: "veamm"
+            type: "veamm",
+            reward_token_id: aerodromeId
         }
     ]).returning({ id: exchangesTable.id });
 
