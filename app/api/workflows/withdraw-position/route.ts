@@ -9,7 +9,7 @@ import { getReceivedTokenAmount } from "./utils";
 import { getPoolData } from "@/lib/pools";
 import type { NextRequest } from "next/server";
 import { sellAsset } from "@/lib/swap";
-
+import { NextResponse } from "next/server";
 export const POST = async (req: NextRequest) => {
 	const { poolId, userId } = await req.json();
 	const { smartAccount } = await getAccount(userId);
@@ -67,8 +67,8 @@ export const POST = async (req: NextRequest) => {
 				return soldAsset;
 			}),
 		);
-		return {
+		return NextResponse.json({
 			soldAssets: soldAssets,
-		};
+		});
 	}
 };

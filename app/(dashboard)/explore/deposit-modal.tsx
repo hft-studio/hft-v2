@@ -4,13 +4,12 @@ import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import type { poolsTable } from "@/db/schema";
 import { Slider } from "@/components/ui/slider";
-
+import { useCoinbaseOnRamp } from "@/hooks/use-onramp";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -21,9 +20,10 @@ interface DepositModalProps {
   onClose: () => void;
   onDeposit: (amount: string) => void;
   onWithdraw: () => Promise<void>;
+  userAddress: string;
+  availableUsdcBalance: number;
 }
 
-// Shortcut button data
 const depositShortcuts = [
   { label: "25", value: "25" },
   { label: "50", value: "50" },
@@ -44,7 +44,9 @@ export function DepositModal({
   isOpen, 
   onClose, 
   onDeposit, 
-  onWithdraw 
+  onWithdraw,
+  userAddress,
+  availableUsdcBalance
 }: DepositModalProps) {
   const [depositAmount, setDepositAmount] = useState("0");
   const [withdrawPercent, setWithdrawPercent] = useState(100);
@@ -53,7 +55,6 @@ export function DepositModal({
   const [activeTab, setActiveTab] = useState<string>(position > 0 ? "withdraw" : "deposit");
   const inputRef = useRef<HTMLInputElement>(null);
   
-  const availableUsdcBalance = 250.00;
   const positionAmount = position || 0;
   const formattedPosition = positionAmount.toFixed(2);
   
@@ -62,7 +63,6 @@ export function DepositModal({
   const formattedSymbol = pool?.symbol?.replace("vAMM-", "").replace("/", "-");
   const formattedApr = `${Number.parseFloat(String(pool?.apr || "0")).toFixed(2)}%`;
 
-  // Reset values when modal is opened
   useEffect(() => {
     if (isOpen) {
       setDepositAmount("0");
@@ -70,34 +70,28 @@ export function DepositModal({
     }
   }, [isOpen]);
   
-  // Handle deposit amount changes from the slider
   const handleDepositSliderChange = (value: number[]) => {
     setDepositAmount(value[0].toString());
   };
 
-  // Handle deposit amount changes from the input
   const handleDepositInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     if (/^\d*\.?\d*$/.test(value)) {
       const numValue = Number.parseFloat(value || "0");
-      // Clamp value to available balance
       if (numValue <= availableUsdcBalance) {
         setDepositAmount(value);
       }
     }
   };
   
-  // Handle withdraw percent changes
   const handleWithdrawSliderChange = (value: number[]) => {
     setWithdrawPercent(value[0]);
   };
   
-  // Handle deposit shortcuts
   const handleDepositShortcut = (value: string) => {
     setDepositAmount(value);
   };
   
-  // Handle withdraw shortcuts
   const handleWithdrawShortcut = (value: number) => {
     setWithdrawPercent(value);
   };
@@ -130,9 +124,9 @@ export function DepositModal({
     }
   };
   
-  const handleAddFunds = () => {
-    window.open("https://onramp.com", "_blank");
-  };
+  const { openDeposit } = useCoinbaseOnRamp({
+    address: userAddress,
+  });
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -182,7 +176,6 @@ export function DepositModal({
               </TabsList>
             
               <TabsContent value="deposit" className="p-4 focus-visible:outline-none focus-visible:ring-0">
-                {/* Amount display */}
                 <div className="flex flex-col items-center space-y-2 pb-3">
                   <div className="text-6xl font-light flex items-baseline relative w-full justify-center">
                     <input
@@ -200,7 +193,6 @@ export function DepositModal({
                   </div>
                 </div>
                 
-                {/* Slider */}
                 <div className="py-4">
                   <Slider 
                     defaultValue={[0]} 
@@ -211,7 +203,6 @@ export function DepositModal({
                     className="my-4"
                   />
                   
-                  {/* Shortcuts */}
                   <div className="flex justify-between gap-2 mt-4">
                     {depositShortcuts.map((shortcut) => (
                       <button
@@ -232,7 +223,7 @@ export function DepositModal({
                   </div>
                   <button 
                     type="button"
-                    onClick={handleAddFunds}
+                    onClick={openDeposit}
                     className="text-blue-400 hover:text-blue-300 flex items-center space-x-1"
                   >
                     <span>Add funds</span>
@@ -245,7 +236,6 @@ export function DepositModal({
               </TabsContent>
               
               <TabsContent value="withdraw" className="p-4 focus-visible:outline-none focus-visible:ring-0">
-                {/* Percentage display */}
                 <div className="flex flex-col items-center space-y-2 pb-3">
                   <div className="text-6xl font-light flex items-baseline relative w-full justify-center">
                     <span className="text-white">{withdrawPercent}%</span>
@@ -255,7 +245,6 @@ export function DepositModal({
                   </div>
                 </div>
                 
-                {/* Slider */}
                 <div className="py-4">
                   <Slider 
                     defaultValue={[100]} 
@@ -266,7 +255,6 @@ export function DepositModal({
                     className="my-4"
                   />
                   
-                  {/* Shortcuts */}
                   <div className="flex justify-between gap-2 mt-4">
                     {withdrawShortcuts.map((shortcut) => (
                       <button

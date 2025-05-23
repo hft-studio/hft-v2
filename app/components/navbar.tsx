@@ -15,9 +15,9 @@ import {
 	WalletIcon,
 } from "lucide-react";
 import { Button } from "../../components/ui/button";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
-import { useWithdrawal } from "@/hooks/use-withdraw";
+import { useWithdraw } from "@/hooks/use-withdraw";
 import { useCoinbaseOnRamp } from "@/hooks/use-onramp";
 
 interface NavbarProps {
@@ -29,19 +29,20 @@ interface NavbarProps {
 
 export const Navbar = ({ usdcAvailable, smartAccountAddress, userId, name }: NavbarProps) => {
 	const router = useRouter();
+	const pathname = usePathname(); // Get the current route
+
 	const handleSignOut = async () => {
 		await signOut();
 		router.push("/login");
 	};
 
-
 	if (!smartAccountAddress) {
 		throw new Error("Smart account address is required");
 	}
 
-	const { openDeposit, isReady: isDepositReady } = useCoinbaseOnRamp({ address: smartAccountAddress })
-	const { handleWithdrawal } = useWithdrawal({ address: smartAccountAddress, partnerUserId: userId })
-
+	const { openDeposit, isReady: isDepositReady } = useCoinbaseOnRamp({ address: smartAccountAddress });
+	const { handleWithdrawal } = useWithdraw({ address: smartAccountAddress, partnerUserId: userId });
+	
 	return (
 		<div>
 			<nav className="border-b-0 bg-black/40 h-[60px] backdrop-blur-sm">
@@ -62,8 +63,6 @@ export const Navbar = ({ usdcAvailable, smartAccountAddress, userId, name }: Nav
 							</div>
 						</div>
 						<div className="flex items-center space-x-4">
-							
-
 							{/* Wallet dropdown with balance */}
 							<DropdownMenu>
 								<DropdownMenuTrigger asChild>
@@ -104,8 +103,6 @@ export const Navbar = ({ usdcAvailable, smartAccountAddress, userId, name }: Nav
 									</DropdownMenuItem>
 								</DropdownMenuContent>
 							</DropdownMenu>
-
-							
 						</div>
 					</div>
 				</div>
@@ -116,37 +113,45 @@ export const Navbar = ({ usdcAvailable, smartAccountAddress, userId, name }: Nav
 					<div className="flex items-center space-x-4 h-12">
 						<a
 							href="/explore"
-							className="text-[#5AA1E3] px-3 py-2 text-sm font-medium border-b-2 border-[#5AA1E3]"
+							className={`px-3 py-2 text-sm font-medium ${
+								pathname === "/explore"
+									? "text-[#5AA1E3] border-b-2 border-[#5AA1E3]"
+									: "text-gray-300 hover:text-[#5AA1E3]"
+							}`}
 						>
 							Explore
 						</a>
 						<a
-							href="/positions"
-							className="text-gray-300 hover:text-[#5AA1E3] px-3 py-2 text-sm font-medium"
+							href="/rewards"
+							className={`px-3 py-2 text-sm font-medium ${
+								pathname === "/rewards"
+									? "text-[#5AA1E3] border-b-2 border-[#5AA1E3]"
+									: "text-gray-300 hover:text-[#5AA1E3]"
+							}`}
 						>
-							Positions
+							Rewards
 						</a>
 					</div>
-                    <div className="hidden md:flex items-center space-x-5 mr-2">
-								<a
-									href="/feedback"
-									className="text-gray-300 hover:text-[#5AA1E3] transition-colors duration-200 text-sm font-medium"
-								>
-									Feedback
-								</a>
-								<a
-									href="/help"
-									className="text-gray-300 hover:text-[#5AA1E3] transition-colors duration-200 text-sm font-medium"
-								>
-									Help
-								</a>
-								<a
-									href="/docs"
-									className="text-gray-300 hover:text-[#5AA1E3] transition-colors duration-200 text-sm font-medium"
-								>
-									Docs
-								</a>
-							</div>
+					<div className="hidden md:flex items-center space-x-5 mr-2">
+						<a
+							href="/feedback"
+							className="text-gray-300 hover:text-[#5AA1E3] transition-colors duration-200 text-sm font-medium"
+						>
+							Feedback
+						</a>
+						<a
+							href="/help"
+							className="text-gray-300 hover:text-[#5AA1E3] transition-colors duration-200 text-sm font-medium"
+						>
+							Help
+						</a>
+						<a
+							href="/docs"
+							className="text-gray-300 hover:text-[#5AA1E3] transition-colors duration-200 text-sm font-medium"
+						>
+							Docs
+						</a>
+					</div>
 				</div>
 			</div>
 		</div>

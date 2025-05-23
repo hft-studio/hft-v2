@@ -3,12 +3,13 @@ import { ContentContainer } from '@/components/layout/content-container';
 import { PoolCard } from './pool-card';
 import { Navbar } from '@/app/components/navbar';
 import type { getPositions } from '@/lib/positions';
+import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 
 export function ExploreContent(
     { positions, usdcAvailable, smartAccountAddress, userId, name }: { 
         positions: Awaited<ReturnType<typeof getPositions>>,
         usdcAvailable?: string,
-        smartAccountAddress?: string,
+        smartAccountAddress: string,
         userId: string,
         name: string,
     }
@@ -25,6 +26,8 @@ export function ExploreContent(
                             <PoolCard 
                                 key={position.pool.address} 
                                 position={position} 
+                                userAddress={smartAccountAddress}
+                                usdcAvailable={Number.parseFloat(usdcAvailable as string)}
                             />
                         ))}
                 </div>

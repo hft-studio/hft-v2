@@ -13,17 +13,21 @@ export default async function DashboardPage() {
 		redirect("/login");
 	}
 	const { smartAccount } = await getAccount(session?.user?.id as string);
-	const positions = await getPositions(smartAccount?.address as `0x${string}`);
+	if (!smartAccount) {
+		redirect("/login");
+	}
+	const positions = await getPositions(smartAccount.address);
 	const usdcAvailable = await getUsdcAvailable(
-		smartAccount?.address as `0x${string}`,
+		smartAccount.address,
 	);
+	const usdcAvailableFormatted = Number.parseFloat(usdcAvailable).toFixed(2);
 	return (
 		<div className="relative min-h-screen">
 			<ExploreContent
 				positions={positions}
-				usdcAvailable={usdcAvailable}
+				usdcAvailable={usdcAvailableFormatted}
 				userId={session?.user?.id}
-				smartAccountAddress={smartAccount?.address}
+				smartAccountAddress={smartAccount.address}
 				name={session?.user?.name as string}
 			/>
 			<div className="py-10">

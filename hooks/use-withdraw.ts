@@ -23,7 +23,7 @@ interface UseWithdrawalProps {
     partnerUserId: string;
 }
 
-export function useWithdrawal({ address, partnerUserId }: UseWithdrawalProps) {
+export function useWithdraw({ address, partnerUserId }: UseWithdrawalProps) {
     const router = useRouter();
     const searchParams = useSearchParams();
 

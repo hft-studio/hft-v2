@@ -9,9 +9,11 @@ import type { getPositions } from "@/lib/positions";
 import { useRouter } from "next/navigation";
 interface PoolCardProps {
 	position: Awaited<ReturnType<typeof getPositions>>[number];
+	userAddress: string;
+	usdcAvailable: number;
 }
 
-export function PoolCard({ position }: PoolCardProps) {
+export function PoolCard({ position, userAddress, usdcAvailable }: PoolCardProps) {
 	const [isModalOpen, setIsModalOpen] = useState(false);
 	const router = useRouter();
 	const formattedApr = `${Number.parseFloat(String(position.pool.apr)).toFixed(2)}%`;
@@ -105,6 +107,8 @@ export function PoolCard({ position }: PoolCardProps) {
 				onClose={handleModalClose}
 				onDeposit={handleDeposit}
 				onWithdraw={handleWithdraw}
+				userAddress={userAddress}
+				availableUsdcBalance={usdcAvailable}
 			/>
 		</>
 	);
