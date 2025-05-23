@@ -1,0 +1,12 @@
+{
+    "crons": [
+    {
+      "path": "/api/cron/claim-rewards",
+      "schedule": "*/4 * * * *"
+    },
+    {
+      "path": "/api/cron/update-pool-data",
+      "schedule": "*/5 * * * *"
+    }
+  ]
+}
