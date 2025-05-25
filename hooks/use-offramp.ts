@@ -19,11 +19,13 @@ interface UseOfframpProps {
 }
 
 export function useOfframp({ address, partnerUserId }: UseOfframpProps) {
+	const assets = ["USDC"];
+	const assetsString = JSON.stringify(assets);
 	const handleOfframp = useCallback(() => {
 		const callbackUrl = `${redirectUrl}/api/offramp/callback`;
 		const url = `https://pay.coinbase.com/v3/sell/input?appId=${appId}&partnerUserId=${partnerUserId}&addresses={"${address}":["base"]}&assets=${assetsString}&redirectUrl=${encodeURIComponent(callbackUrl)}`;
 		window.open(url, "_blank");
-	}, [address, partnerUserId]);
+	}, [address, partnerUserId, assetsString]);
 
 	return { handleOfframp };
 }
