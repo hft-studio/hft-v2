@@ -6,5 +6,5 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export const getBaseUrl = () => {
-	return process.env.NODE_ENV === "production" ? "https://hft.studio" : "http://localhost:3000";
+	return process.env.NEXT_PUBLIC_VERCEL_ENV === "production" ? "https://hft.studio" : "http://localhost:3000";
 }
