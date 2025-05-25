@@ -16,6 +16,7 @@ import { signOut } from "next-auth/react";
 import { useOfframp } from "@/hooks/use-offramp";
 import { useOnramp } from "@/hooks/use-onramp";
 import useSWR from "swr";
+import { getBaseUrl } from "@/lib/utils";
 
 interface NavbarProps {
 	usdcAvailable: string;
@@ -34,8 +35,8 @@ export const Navbar = ({
 	const pathname = usePathname();
 
 	const fetcher = (url: string) => fetch(url).then((res) => res.json());
-	const { data, error } = useSWR(
-		`http://localhost:3000/api/balance?address=${smartAccountAddress}`,	
+	const { data } = useSWR(
+		`${getBaseUrl()}/api/balance?address=${smartAccountAddress}`,	
 		fetcher,
 		{
 			refreshInterval: 1000,
