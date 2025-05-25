@@ -34,7 +34,6 @@ export function PoolCard({ position, userAddress, usdcAvailable, userId }: PoolC
 	};
 
 	const handleDeposit = async (amount: string) => {
-		console.log("deposit", amount);
 		await createPosition(position.pool.id, Number.parseFloat(amount));
 		setIsModalOpen(false);
 		router.refresh();
