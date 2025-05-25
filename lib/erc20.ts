@@ -89,3 +89,24 @@ export const transfer = async (
 		txHash: result.userOpHash,
 	};
 };
+
+
+export const buildTransferCalls = async (
+	tokenAddress: `0x${string}`,
+	to: `0x${string}`,
+	amount: bigint,
+) => {
+	const calls = [
+		{
+			to: tokenAddress,
+			data: encodeFunctionData({
+				abi: erc20Abi,
+				functionName: "transfer",
+				args: [to, amount],
+			}),
+			value: BigInt(0),
+		},
+	];
+
+	return calls;
+};

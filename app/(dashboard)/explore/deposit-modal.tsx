@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import type { poolsTable } from "@/db/schema";
 import { Slider } from "@/components/ui/slider";
-import { useCoinbaseOnRamp } from "@/hooks/use-onramp";
+import { useOnramp } from "@/hooks/use-onramp";
 import {
   Dialog,
   DialogContent,
@@ -22,6 +22,7 @@ interface DepositModalProps {
   onWithdraw: () => Promise<void>;
   userAddress: string;
   availableUsdcBalance: number;
+  userId: string;
 }
 
 const depositShortcuts = [
@@ -46,7 +47,8 @@ export function DepositModal({
   onDeposit, 
   onWithdraw,
   userAddress,
-  availableUsdcBalance
+  availableUsdcBalance,
+  userId
 }: DepositModalProps) {
   const [depositAmount, setDepositAmount] = useState("0");
   const [withdrawPercent, setWithdrawPercent] = useState(100);
@@ -124,8 +126,9 @@ export function DepositModal({
     }
   };
   
-  const { openDeposit } = useCoinbaseOnRamp({
+  const { handleOnramp } = useOnramp({
     address: userAddress,
+    partnerUserId: userId,
   });
 
   return (
@@ -223,7 +226,7 @@ export function DepositModal({
                   </div>
                   <button 
                     type="button"
-                    onClick={openDeposit}
+                    onClick={handleOnramp}
                     className="text-blue-400 hover:text-blue-300 flex items-center space-x-1"
                   >
                     <span>Add funds</span>

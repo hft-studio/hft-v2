@@ -3,6 +3,7 @@ import type { NextRequest } from "next/server";
 import { wallets as walletsTable } from "@/db/schema";
 import type { ClaimRewardsInput } from "@/app/api/workflows/claim-rewards/route";
 import { getBaseUrl } from "@/lib/utils";
+
 const cronSecret = process.env.CRON_SECRET;
 if (!cronSecret) {
 	throw new Error("CRON_SECRET is not set");

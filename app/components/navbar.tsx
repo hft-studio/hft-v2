@@ -9,28 +9,41 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "../../components/ui/dropdown-menu";
-import {
-	ArrowUpIcon,
-	ArrowDownIcon,
-	WalletIcon,
-} from "lucide-react";
+import { ArrowUpIcon, ArrowDownIcon, WalletIcon } from "lucide-react";
 import { Button } from "../../components/ui/button";
 import { useRouter, usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
-import { useWithdraw } from "@/hooks/use-withdraw";
-import { useCoinbaseOnRamp } from "@/hooks/use-onramp";
+import { useOfframp } from "@/hooks/use-offramp";
+import { useOnramp } from "@/hooks/use-onramp";
+import useSWR from "swr";
 
 interface NavbarProps {
-	usdcAvailable?: string;
+	usdcAvailable: string;
 	smartAccountAddress?: string;
 	userId: string;
 	name: string;
 }
 
-export const Navbar = ({ usdcAvailable, smartAccountAddress, userId, name }: NavbarProps) => {
+export const Navbar = ({
+	usdcAvailable,
+	smartAccountAddress,
+	userId,
+	name,
+}: NavbarProps) => {
 	const router = useRouter();
-	const pathname = usePathname(); // Get the current route
+	const pathname = usePathname();
 
+	const fetcher = (url: string) => fetch(url).then((res) => res.json());
+	const { data, error } = useSWR(
+		`http://localhost:3000/api/balance?address=${smartAccountAddress}`,	
+		fetcher,
+		{
+			refreshInterval: 1000,
+			dedupingInterval: 900,
+			revalidateOnFocus: false,
+			revalidateIfStale: false,
+		},
+	);
 	const handleSignOut = async () => {
 		await signOut();
 		router.push("/login");
@@ -40,9 +53,18 @@ export const Navbar = ({ usdcAvailable, smartAccountAddress, userId, name }: Nav
 		throw new Error("Smart account address is required");
 	}
 
-	const { openDeposit, isReady: isDepositReady } = useCoinbaseOnRamp({ address: smartAccountAddress });
-	const { handleWithdrawal } = useWithdraw({ address: smartAccountAddress, partnerUserId: userId });
-	
+	const { handleOnramp } = useOnramp({
+		address: smartAccountAddress,
+		partnerUserId: userId,
+	});
+	const { handleOfframp } = useOfframp({
+		address: smartAccountAddress,
+		partnerUserId: userId,
+	});
+	const availableBalance = data?.usdcAvailable
+		? Number.parseFloat(data.usdcAvailable).toFixed(2)
+		: Number.parseFloat(usdcAvailable).toFixed(2);
+
 	return (
 		<div>
 			<nav className="border-b-0 bg-black/40 h-[60px] backdrop-blur-sm">
@@ -63,7 +85,6 @@ export const Navbar = ({ usdcAvailable, smartAccountAddress, userId, name }: Nav
 							</div>
 						</div>
 						<div className="flex items-center space-x-4">
-							{/* Wallet dropdown with balance */}
 							<DropdownMenu>
 								<DropdownMenuTrigger asChild>
 									<Button
@@ -72,12 +93,7 @@ export const Navbar = ({ usdcAvailable, smartAccountAddress, userId, name }: Nav
 										className="border-gray-700 bg-black/50 hover:bg-black/70 text-gray-200 flex items-center gap-2"
 									>
 										<WalletIcon className="h-4 w-4" />
-										<span>
-											$
-											{usdcAvailable
-												? Number.parseFloat(usdcAvailable).toFixed(2)
-												: "0.00"}
-										</span>
+										<span>${availableBalance}</span>
 									</Button>
 								</DropdownMenuTrigger>
 								<DropdownMenuContent align="end" className="w-48">
@@ -85,19 +101,19 @@ export const Navbar = ({ usdcAvailable, smartAccountAddress, userId, name }: Nav
 									<DropdownMenuSeparator />
 									<DropdownMenuItem
 										className="flex items-center gap-2 cursor-pointer"
-										onSelect={openDeposit}
+										onSelect={handleOnramp}
 									>
 										<ArrowDownIcon className="h-4 w-4 " />
 										<span>Deposit</span>
 									</DropdownMenuItem>
 									<DropdownMenuItem
 										className="flex items-center gap-2 cursor-pointer"
-										onSelect={handleWithdrawal}
+										onSelect={handleOfframp}
 									>
 										<ArrowUpIcon className="h-4 w-4 " />
 										<span>Withdraw</span>
 									</DropdownMenuItem>
-                                    <DropdownMenuSeparator />
+									<DropdownMenuSeparator />
 									<DropdownMenuItem onSelect={handleSignOut}>
 										Sign out
 									</DropdownMenuItem>
@@ -120,7 +136,7 @@ export const Navbar = ({ usdcAvailable, smartAccountAddress, userId, name }: Nav
 							}`}
 						>
 							Explore
-						</a>
+						</a>	
 						<a
 							href="/rewards"
 							className={`px-3 py-2 text-sm font-medium ${

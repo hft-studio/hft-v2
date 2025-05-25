@@ -11,9 +11,10 @@ interface PoolCardProps {
 	position: Awaited<ReturnType<typeof getPositions>>[number];
 	userAddress: string;
 	usdcAvailable: number;
+	userId: string;
 }
 
-export function PoolCard({ position, userAddress, usdcAvailable }: PoolCardProps) {
+export function PoolCard({ position, userAddress, usdcAvailable, userId }: PoolCardProps) {
 	const [isModalOpen, setIsModalOpen] = useState(false);
 	const router = useRouter();
 	const formattedApr = `${Number.parseFloat(String(position.pool.apr)).toFixed(2)}%`;
@@ -24,7 +25,6 @@ export function PoolCard({ position, userAddress, usdcAvailable }: PoolCardProps
 	const positionAmount = Number.parseFloat(String(position.totalAmount));
 	const formattedPosition = `${positionAmount.toFixed(2)}`;
 	const active = positionAmount > 0;
-
 	const handleManageClick = () => {
 		setIsModalOpen(true);
 	};
@@ -109,6 +109,7 @@ export function PoolCard({ position, userAddress, usdcAvailable }: PoolCardProps
 				onWithdraw={handleWithdraw}
 				userAddress={userAddress}
 				availableUsdcBalance={usdcAvailable}
+				userId={userId}
 			/>
 		</>
 	);
