@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
 	const { totalEarned, earningsArray } = await calculateTotalEarnedInUSD(
 		walletAddress as `0x${string}`,
 	);
-	if (totalEarned < 0) {
+	if (totalEarned < 5) {
 		return NextResponse.json({ success: true, message: "Ballance is too low" });
 	}
 
