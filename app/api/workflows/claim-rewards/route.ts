@@ -45,8 +45,6 @@ export async function POST(request: NextRequest) {
 	if (totalEarned > 5) {
 		return NextResponse.json({ success: true, message: "Ballance is too low" });
 	}
-
-
 	const calls = await buildClaimCalls(
 		walletAddress as `0x${string}`,
 		earningsArray,

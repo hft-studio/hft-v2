@@ -8,24 +8,20 @@ import { ethers } from "ethers";
 import { getBaseUrl } from "@/lib/utils";
 import { cdpClient } from "@/lib/clients";
 import { buildTransferCalls } from "@/lib/erc20";
-
+import { stackServerApp } from "@/app/lib/stack.server";
 const baseUrl = getBaseUrl();
 
 export async function GET() {
-	const session = await getServerSession(authOptions);
+	const user = await stackServerApp.getUser({ or: "redirect" });
 
-	if (!session?.user?.id) {
-		throw new Error("Unauthorized");
-	}
-
-	const { smartAccount } = await getAccount(session.user.id);
+	const { smartAccount } = await getAccount(user.id);
 	if (!smartAccount) {
 		throw new Error("Smart account not found");
 	}
 
 	const { url, jwt } = await createRequest({
 		request_method: "GET",
-		request_path: `/onramp/v1/sell/user/${session?.user?.id}/transactions`,
+		request_path: `/onramp/v1/sell/user/${user.id}/transactions`,
 	});
 
 	const response = await fetch(url, {

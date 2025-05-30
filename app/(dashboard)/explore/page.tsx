@@ -6,13 +6,13 @@ import { getPositions } from "@/lib/positions";
 import { getAccount } from "@/lib/account";
 import { getUsdcAvailable } from "./utils";
 import { redirect } from "next/navigation";
+import { stackServerApp } from "@/app/lib/stack.server";
 
 export default async function DashboardPage() {
-	const session = await getServerSession(authOptions);
-	if (!session?.user?.id) {
-		redirect("/login");
-	}
-	const { smartAccount } = await getAccount(session?.user?.id as string);
+
+	const user = await stackServerApp.getUser({ or: "redirect" });
+
+	const { smartAccount } = await getAccount(user.id);
 	if (!smartAccount) {
 		redirect("/login");
 	}
@@ -26,9 +26,9 @@ export default async function DashboardPage() {
 			<ExploreContent
 				positions={positions}
 				usdcAvailable={usdcAvailableFormatted}
-				userId={session?.user?.id}
+				userId={user.id}
 				smartAccountAddress={smartAccount.address}
-				name={session?.user?.name as string}
+				name={user.displayName as string}
 			/>
 			<div className="py-10">
 				<Social position="relative" className="mt-12 mb-6" />
