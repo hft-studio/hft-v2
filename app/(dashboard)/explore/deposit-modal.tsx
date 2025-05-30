@@ -69,21 +69,21 @@ export function DepositModal({
     if (isOpen) {
       setDepositAmount("0");
       setWithdrawPercent(100);
+      setTimeout(() => {
+        if (inputRef.current && activeTab === 'deposit') {
+          inputRef.current.focus();
+          inputRef.current.select();
+        }
+      }, 0);
     }
-  }, [isOpen]);
+  }, [isOpen, activeTab]);
   
   const handleDepositSliderChange = (value: number[]) => {
     setDepositAmount(value[0].toString());
   };
 
   const handleDepositInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    if (/^\d*\.?\d*$/.test(value)) {
-      const numValue = Number.parseFloat(value || "0");
-      if (numValue <= availableUsdcBalance) {
-        setDepositAmount(value);
-      }
-    }
+    setDepositAmount(e.target.value);
   };
   
   const handleWithdrawSliderChange = (value: number[]) => {
