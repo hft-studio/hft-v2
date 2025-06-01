@@ -4,10 +4,10 @@ import { UserButton, useUser } from "@stackframe/stack";
 import { useTheme } from "next-themes";
 import NextLink from "next/link";
 import NextImage from "next/image";
-import { Button } from "@/components/ui/button";
-import { Typography } from "@/components/ui/typography";
 import { NavTabs } from "@/app/components/nav-tabs";
 import { Wallet } from "@/app/components/wallet";
+import { useState } from "react";
+import { useEffect } from "react";
 const tabs = [
 	{ title: "Explore", href: "/explore" },
 	{ title: "Rewards", href: "/rewards" },
@@ -30,8 +30,12 @@ export function Navbar({
 	showWallet = true,
 }: NavbarProps) {
 	const { resolvedTheme, setTheme } = useTheme();
-	console.log(showTabs, showWallet);
 	const user = useUser();
+	const [isLightMode, setIsLightMode] = useState(false);
+	useEffect(() => {
+		setIsLightMode(resolvedTheme === "light");
+	}, [resolvedTheme]);
+	console.log(isLightMode);
 	return (
 		<header
 			className="sticky top-0 z-30 flex flex-col  mx-auto bg-white dark:bg-black border-b w-full"
@@ -41,9 +45,10 @@ export function Navbar({
 				style={{ height: "50px" }}
 			>
 				<div className="flex items-center justify-center">
+					{isLightMode ? (
 					<NextLink href="/explore">
 						<NextImage
-							src="/2.png"
+							src="/logo-bright.png"
 							alt="HF Studio Logo"
 							width={36}
 							height={20}
@@ -51,29 +56,32 @@ export function Navbar({
 							style={{ objectFit: "contain" }}
 						/>
 					</NextLink>
+					) : (
+						<NextLink href="/explore">
+							<NextImage
+								src="/2.png"
+								alt="HF Studio Logo"
+								width={36}
+								height={20}
+								className="drop-shadow-[0_0_8px_rgba(90,161,227,0.6)]"
+								style={{ objectFit: "contain" }}
+							/>
+						</NextLink>
+					)}
 				</div>
-
 				<div className="flex items-center">
 					<div className="flex gap-4 items-center">
-
-						{userData && (
-							<>
-								{showWallet && (
-									<Wallet
-										userData={userData}
-									/>
-								)}
-								<UserButton
-									colorModeToggle={() =>
-										setTheme(resolvedTheme === "light" ? "dark" : "light")
-									}
-								/>
-							</>
+						{showWallet && userData && (
+							<Wallet
+								userData={userData}
+							/>
 						)}
-
+						<UserButton
+							colorModeToggle={() =>
+								setTheme(resolvedTheme === "light" ? "dark" : "light")
+							}
+						/>
 					</div>
-
-
 				</div>
 			</div>
 			{showTabs && (

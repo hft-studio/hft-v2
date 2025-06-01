@@ -1,7 +1,5 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
 import { createRequest } from "@/lib/coinbase";
-import { authOptions } from "@/lib/auth";
 import { getAccount } from "@/lib/account";
 import { getTokenBySymbol } from "@/lib/tokens";
 import { ethers } from "ethers";

@@ -9,7 +9,7 @@ import {
 } from "../../components/ui/dropdown-menu";
 import { ArrowUpIcon, ArrowDownIcon, WalletIcon, User } from "lucide-react";
 import { Button } from "../../components/ui/button";
-import { useRouter, usePathname } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useOfframp } from "@/hooks/use-offramp";
 import { useOnramp } from "@/hooks/use-onramp";
 import useSWR from "swr";
@@ -50,7 +50,6 @@ export const Wallet = ({
 	userData,
 }: WalletProps) => {
 	const router = useRouter();
-	const pathname = usePathname();
 	const user = useUser({ or: "redirect" });		
 	const fetcher = (url: string) => fetch(url).then((res) => res.json());
 	const { data } = useSWR(
@@ -102,7 +101,6 @@ export const Wallet = ({
 				<Item text="Deposit" icon={<ArrowDownIcon className="h-4 w-4 " />} onClick={handleOnramp} />
 				<Item text="Withdraw" icon={<ArrowUpIcon className="h-4 w-4 " />} onClick={handleOfframp} />
 				<DropdownMenuSeparator />
-				
 				<Item text="Sign out" icon={<LogOut className="h-4 w-4 " />} onClick={handleSignOut} />	
 			</DropdownMenuContent>
 		</DropdownMenu>

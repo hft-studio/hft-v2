@@ -1,13 +1,9 @@
 import { createRequest } from "@/lib/coinbase"
-import { getServerSession } from "next-auth"    
-import { authOptions } from "@/lib/auth"
 import { NextResponse } from "next/server"
+import { stackServerApp } from "@/app/lib/stack.server";
 
 export async function GET() {
-    const session = await getServerSession(authOptions)
-    if (!session) {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
+    const user = await stackServerApp.getUser({ or: "redirect" });
     const { url, jwt } = await createRequest({
         request_method: "GET",
         request_path: "/onramp/v1/buy/transactions",
@@ -21,5 +17,11 @@ export async function GET() {
     })
 
     const data = await response.json()
-    return NextResponse.json(data.transactions.filter((transaction: { user_id: string, partner_user_ref: string }) => transaction.partner_user_ref === session?.user?.id))
+    return NextResponse.json(
+        data.transactions.filter((transaction: { user_id: string, partner_user_ref: string }) =>
+        transaction.partner_user_ref === user?.id),
+        {
+            status: 200,
+        }
+    )
 }
