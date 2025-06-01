@@ -20,10 +20,17 @@ interface NavbarProps {
 		userId: string;
 		name: string;
 	};
+	showTabs?: boolean;
+	showWallet?: boolean;
 }
 
-export function Navbar(props: NavbarProps) {
+export function Navbar({
+	userData,
+	showTabs = true,
+	showWallet = true,
+}: NavbarProps) {
 	const { resolvedTheme, setTheme } = useTheme();
+	console.log(showTabs, showWallet);
 	const user = useUser();
 	return (
 		<header
@@ -48,32 +55,30 @@ export function Navbar(props: NavbarProps) {
 
 				<div className="flex items-center">
 					<div className="flex gap-4 items-center">
-						<NextLink href="https://docs.stack-auth.com/">
-							<Typography type="label">Docs</Typography>
-						</NextLink>
-						<NextLink href="https://docs.stack-auth.com/">
-							<Button variant="outline" size="sm">
-								Feedback
-							</Button>
-						</NextLink>
+
+						{userData && (
+							<>
+								{showWallet && (
+									<Wallet
+										userData={userData}
+									/>
+								)}
+								<UserButton
+									colorModeToggle={() =>
+										setTheme(resolvedTheme === "light" ? "dark" : "light")
+									}
+								/>
+							</>
+						)}
 
 					</div>
 
-					{/* <UserButton
-						colorModeToggle={() =>
-							setTheme(resolvedTheme === "light" ? "dark" : "light")
-						}
-					/> */}
+
 				</div>
 			</div>
-			{props.userData && (
+			{showTabs && (
 				<div className="px-4 pb-2 flex items-center justify-between">
 					<NavTabs tabs={tabs} />
-					{props.userData && (
-						<Wallet
-							userData={props.userData}
-						/>
-					)}
 				</div>
 			)}
 		</header>

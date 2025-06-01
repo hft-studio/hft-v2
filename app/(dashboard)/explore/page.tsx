@@ -1,7 +1,5 @@
 import { ExploreContent } from "./explore-content";
 import { Social } from "@/app/components/social";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { getPositions } from "@/lib/positions";
 import { getAccount } from "@/lib/account";
 import { getUsdcAvailable } from "./utils";
@@ -12,9 +10,13 @@ export default async function DashboardPage() {
 
 	const user = await stackServerApp.getUser({ or: "redirect" });
 
+	const permission = await user.getPermission('beta');
+	if (!permission) {
+		redirect("/beta");
+	}
 	const { smartAccount } = await getAccount(user.id);
 	if (!smartAccount) {
-		redirect("/login");
+		redirect("/handler/sign-in");
 	}
 	const positions = await getPositions(smartAccount.address);
 	const usdcAvailable = await getUsdcAvailable(

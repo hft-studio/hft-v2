@@ -1,23 +1,21 @@
 "use client";
 import React from "react";
-import Image from "next/image";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
 	DropdownMenuItem,
-	DropdownMenuLabel,
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "../../components/ui/dropdown-menu";
-import { ArrowUpIcon, ArrowDownIcon, WalletIcon } from "lucide-react";
+import { ArrowUpIcon, ArrowDownIcon, WalletIcon, User } from "lucide-react";
 import { Button } from "../../components/ui/button";
 import { useRouter, usePathname } from "next/navigation";
-import { signOut } from "next-auth/react";
 import { useOfframp } from "@/hooks/use-offramp";
 import { useOnramp } from "@/hooks/use-onramp";
 import useSWR from "swr";
 import { Typography } from "@/components/ui/typography";
-import { CircleUser, LogIn, LogOut, SunMoon, UserPlus } from "lucide-react";
+import { LogOut } from "lucide-react";
+import { useUser } from "@stackframe/stack";
 
 interface WalletProps {
 	userData: {
@@ -37,14 +35,23 @@ function Item(props: { text: string, icon: React.ReactNode, onClick: () => void 
 		</div>
 	  </DropdownMenuItem>
 	);
-  }	
+  }
+
+function DropdownMenuLabel(props: { text: string, icon: React.ReactNode }) {
+	return (
+		<div className="flex gap-2 items-center">
+			{props.icon}	
+			<Typography>{props.text}</Typography>
+		</div>
+	);
+}
 
 export const Wallet = ({
 	userData,
 }: WalletProps) => {
 	const router = useRouter();
 	const pathname = usePathname();
-
+	const user = useUser({ or: "redirect" });		
 	const fetcher = (url: string) => fetch(url).then((res) => res.json());
 	const { data } = useSWR(
 		`/api/balance?address=${userData.smartAccountAddress}`,
@@ -59,8 +66,8 @@ export const Wallet = ({
     console.log(data);
 
 	const handleSignOut = async () => {
-		await signOut();
-		router.push("/login");
+		user.signOut();
+		router.push("/handler/sign-in");
 	};
 
 	if (!userData.smartAccountAddress) {
@@ -91,12 +98,11 @@ export const Wallet = ({
 				</Button>
 			</DropdownMenuTrigger>
 			<DropdownMenuContent align="end" className="w-48">
+				<DropdownMenuLabel text={userData.name} icon={<User className="h-4 w-4 " />} />
 				<Item text="Deposit" icon={<ArrowDownIcon className="h-4 w-4 " />} onClick={handleOnramp} />
 				<Item text="Withdraw" icon={<ArrowUpIcon className="h-4 w-4 " />} onClick={handleOfframp} />
 				<DropdownMenuSeparator />
-				<DropdownMenuLabel className="font-normal">
-					<span className="text-sm">{userData.name}</span>
-				</DropdownMenuLabel>
+				
 				<Item text="Sign out" icon={<LogOut className="h-4 w-4 " />} onClick={handleSignOut} />	
 			</DropdownMenuContent>
 		</DropdownMenu>

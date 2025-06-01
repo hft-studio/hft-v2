@@ -50,3 +50,9 @@ export const tokensTable = pgTable("tokens", {
     product_id: text("product_id").notNull(),
 });
 
+export const betaSignUpsTable = pgTable("beta_sign_ups", {
+    id: serial("id").primaryKey(),
+    user_id: text("user_id"),
+    created_at: timestamp("created_at").notNull(),
+});
+

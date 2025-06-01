@@ -13,7 +13,7 @@ export default async function Rewards() {
 
 	const { smartAccount } = await getAccount(user.id);
 	if (!smartAccount) {
-		redirect("/login");
+		redirect("/handler/sign-in");
 	}
     const smartAccountAddress = smartAccount.address;
     const usdcAvailable = await getUsdcAvailable(smartAccount.address);
