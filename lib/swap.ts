@@ -13,6 +13,8 @@ import { db } from "@/db";
 import { eq } from "drizzle-orm";
 import { tokensTable } from "@/db/schema";
 import { getToken } from "./tokens";
+import { writeFile } from "fs/promises";
+import { stringifyReceipt } from "./utils";
 
 type TokenData = typeof tokensTable.$inferSelect;
 
@@ -95,47 +97,58 @@ export async function buildSwapCalls(params: {
 }
 
 export async function sellAsset(params: {
-    smartAccount: EvmSmartAccount;
-    asset: {
-        address: string,
-        amount: string;
-    };
+	smartAccount: EvmSmartAccount;
+	asset: {
+		address: string,
+		amount: string;
+	};
 }) {
 
-    const usdcToken = await getToken(1);
-    if (params.asset.address.toLowerCase() === usdcToken.address.toLowerCase()) {
-        return {
-            usdcAmount: params.asset.amount,
-            tokenInAddress: params.asset.address,
-            amountIn: params.asset.amount
-        }
-    }
-    const token = await db.query.tokensTable.findFirst({
-        where: eq(tokensTable.address, params.asset.address.toLowerCase())
-    });
-    if (!token) {
-        throw new Error(`Token not found: ${params.asset.address}`);
-    }
-    const swapCalls = await buildSwapCalls({
-        smartAccount: params.smartAccount,
-        tokenIn: token,
-        tokenOut: usdcToken,
-        amount: BigInt(params.asset.amount)
-    });
+	const usdcToken = await getToken(1);
+	if (params.asset.address.toLowerCase() === usdcToken.address.toLowerCase()) {
+		return {
+			usdcAmount: params.asset.amount,
+			tokenInAddress: params.asset.address,
+			amountIn: params.asset.amount
+		}
+	}
+	const token = await db.query.tokensTable.findFirst({
+		where: eq(tokensTable.address, params.asset.address.toLowerCase())
+	});
+	if (!token) {
+		throw new Error(`Token not found: ${params.asset.address}`);
+	}
+	const swapCalls = await buildSwapCalls({
+		smartAccount: params.smartAccount,
+		tokenIn: token,
+		tokenOut: usdcToken,
+		amount: BigInt(params.asset.amount)
+	});
+	console.log("swapCalls", swapCalls);
+	const swapOperation = await cdpClient.evm.sendUserOperation({
+		smartAccount: params.smartAccount,
+		network: 'base',
+		calls: swapCalls,
+		paymasterUrl: process.env.PAYMASTER_URL,
+	});
+	console.log("swapOperation", swapOperation);
+	const swapReceipt = await bundlerClient.waitForUserOperationReceipt({
+		hash: swapOperation.userOpHash
+	});
+	if (!swapReceipt.success) {
+		console.error("swap reverted receipt", swapReceipt);
+		console.error("swap reverted operation", swapOperation);
+		throw new Error("Swap reverted");
+	}
+	await writeFile(
+		`./swap-receipt-${swapOperation.userOpHash}.json`,
+		stringifyReceipt(swapReceipt)
+	);
 
-    const swapOperation = await cdpClient.evm.sendUserOperation({
-        smartAccount: params.smartAccount,
-        network: 'base',
-        calls: swapCalls,
-        paymasterUrl: process.env.PAYMASTER_URL,
-    });
-    const swapReceipt = await bundlerClient.waitForUserOperationReceipt({
-        hash: swapOperation.userOpHash
-    });
-    const amount = await getTokenAmountFromSwapReceipt(swapReceipt, usdcToken.address as `0x${string}`, usdcToken.decimals as number);
-    return {
-        usdcAmount: amount.toString(),
-        tokenInAddress: params.asset.address,
-        amountIn: params.asset.amount
-    }
+	const amount = await getTokenAmountFromSwapReceipt(swapReceipt, usdcToken.address as `0x${string}`, usdcToken.decimals as number);
+	return {
+		usdcAmount: amount.toString(),
+		tokenInAddress: params.asset.address,
+		amountIn: params.asset.amount
+	}
 }
