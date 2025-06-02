@@ -4,7 +4,7 @@ import { getPositions } from "@/lib/positions";
 import { getAccount } from "@/lib/account";
 import { getUsdcAvailable } from "./utils";
 import { redirect } from "next/navigation";
-import { stackServerApp } from "@/app/lib/stack.server";
+import { stackServerApp } from "@/lib/stack/stack.server";
 
 export default async function DashboardPage() {
 

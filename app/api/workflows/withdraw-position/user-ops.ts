@@ -1,8 +1,6 @@
 import type { EvmSmartAccount } from "@coinbase/cdp-sdk";
 import { getPoolData } from "@/lib/pools";
-import { cdpClient, bundlerClient, publicClient } from "@/lib/clients";
-import { readContract } from "viem/actions";
-import { encodeFunctionData, erc20Abi } from "viem";
+import { encodeFunctionData } from "viem";
 import { executeTransactionWithRetries } from "@/lib/account";
 
 export const withdrawFromPool = async ({
@@ -81,28 +79,7 @@ export const withdrawFromPool = async ({
     return withdrawFromPoolReceipt;
 }
 
-export const getUnstakedBalance = async ({
-    poolId,
-    smartAccount
-}: {
-    poolId: number,
-    smartAccount: EvmSmartAccount
-}) => {
-    const poolData = await getPoolData(poolId);
-    if (!poolData) {
-        throw new Error(`Pool not found: ${poolId}`);
-    }
-    const unstakedBalance = await readContract(
-        publicClient,
-        {
-            address: poolData.address as `0x${string}`,
-            abi: erc20Abi,
-            functionName: "balanceOf",
-            args: [smartAccount.address]
-        }
-    ) as bigint;
-    return unstakedBalance;
-}
+
 
 export const withdrawFromGauge = async ({
     poolId,
@@ -138,25 +115,4 @@ export const withdrawFromGauge = async ({
     return withdrawFromGaugeReceipt;
 }
 
-export const getStakedBalance = async (poolId: number, smartAccount: EvmSmartAccount) => {
-    const poolData = await getPoolData(poolId);
-    const gaugeAddress = poolData?.gauge_address;
-    const stakedBalance = await readContract(
-        publicClient,
-        {
-            address: gaugeAddress as `0x${string}`,
-            abi: [{
-                inputs: [{ name: "account", type: "address" }],
-                name: "balanceOf",
-                outputs: [{ name: "", type: "uint256" }],
-                stateMutability: "view",
-                type: "function"
-            }],
-            functionName: "balanceOf",
-            args: [smartAccount.address]
-        }
-    ) as bigint;
-
-    return stakedBalance;
-}
 

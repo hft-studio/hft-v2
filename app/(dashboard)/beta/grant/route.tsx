@@ -1,4 +1,4 @@
-import { stackServerApp } from "@/app/lib/stack.server";
+import { stackServerApp } from "@/lib/stack/stack.server";
 import { StackServerApp } from "@stackframe/stack";
 import { NextRequest, NextResponse } from "next/server";
 

@@ -1,7 +1,8 @@
 import { encodeFunctionData, erc20Abi } from "viem";
-import { readContract, writeContract } from "viem/actions";
-import { bundlerClient, cdpClient, publicClient } from "./clients";
+import { readContract } from "viem/actions";
+import { publicClient } from "./clients";
 import type { EvmSmartAccount } from "@coinbase/cdp-sdk";
+import { executeTransactionWithRetries } from "./account";
 
 export function buildApproveCalls(params: {
 	tokens: {
@@ -74,19 +75,11 @@ export const transfer = async (
 		},
 	];
 
-	const result = await cdpClient.evm.sendUserOperation({
-		smartAccount: smartAccount,
-		network: "base",
-	    calls,
-		paymasterUrl: process.env.PAYMASTER_URL,
-	});
-	const receipt = await bundlerClient.waitForUserOperationReceipt({
-		hash: result.userOpHash,
-	});
+	const receipt = await executeTransactionWithRetries(smartAccount, calls);
 
 	return {
-		success: receipt.success,
-		txHash: result.userOpHash,
+		success: receipt.status === 'success',
+		txHash: receipt.transactionHash,
 	};
 };
 

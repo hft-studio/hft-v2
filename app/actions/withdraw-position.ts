@@ -1,6 +1,6 @@
 "use server";
 import { getBaseUrl } from "@/lib/utils";
-import { stackServerApp } from "@/app/lib/stack.server";
+import { stackServerApp } from "@/lib/stack/stack.server";
 
 const baseUrl = getBaseUrl();
 

@@ -6,7 +6,7 @@ import { ethers } from "ethers";
 import { getBaseUrl } from "@/lib/utils";
 import { cdpClient } from "@/lib/clients";
 import { buildTransferCalls } from "@/lib/erc20";
-import { stackServerApp } from "@/app/lib/stack.server";
+import { stackServerApp } from "@/lib/stack/stack.server";
 const baseUrl = getBaseUrl();
 
 export async function GET() {

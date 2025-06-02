@@ -5,7 +5,7 @@ import { getUsdcAvailable } from "../explore/utils";
 import { Social } from "@/app/components/social";
 import { ContentContainer } from "@/components/layout/content-container";
 import { Navbar } from "@/app/components/navbar";
-import { stackServerApp } from "@/app/lib/stack.server";
+import { stackServerApp } from "@/lib/stack/stack.server";
 
 export default async function Rewards() {
 

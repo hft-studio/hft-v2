@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { redirect } from "next/navigation";
 import { db } from "@/db";
 import { betaSignUpsTable } from "@/db/schema/domain";
-import { stackServerApp } from "@/app/lib/stack.server";
+import { stackServerApp } from "@/lib/stack/stack.server";
 import { eq } from "drizzle-orm";
 import { BetaSignupForm } from "./beta-signup-form";
 import { getAccount } from "@/lib/account";

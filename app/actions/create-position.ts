@@ -1,7 +1,7 @@
 "use server";
 import { getAccount } from "@/lib/account";
 import { getBaseUrl } from "@/lib/utils";
-import { stackServerApp } from "@/app/lib/stack.server";
+import { stackServerApp } from "@/lib/stack/stack.server";
 const WORKFLOW_API_KEY = process.env.WORKFLOW_API_KEY;
 if (!WORKFLOW_API_KEY) {
 	throw new Error("WORKFLOW_API_KEY is not set");

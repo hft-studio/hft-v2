@@ -1,11 +1,9 @@
 import { getAccount } from "@/lib/account";
 import {
-	getUnstakedBalance,
 	withdrawFromGauge,
 	withdrawFromPool,
-	getStakedBalance,
 } from "./user-ops";
-import { getReceivedTokenAmount } from "./utils";
+import { getReceivedTokenAmount, getStakedBalance, getUnstakedBalance } from "./utils";
 import { getPoolData } from "@/lib/pools";
 import type { NextRequest } from "next/server";
 import { sellAsset } from "@/lib/swap";

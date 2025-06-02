@@ -1,6 +1,6 @@
 import { createRequest } from "@/lib/coinbase"
 import { NextResponse } from "next/server"
-import { stackServerApp } from "@/app/lib/stack.server";
+import { stackServerApp } from "@/lib/stack/stack.server";
 
 export async function GET() {
     const user = await stackServerApp.getUser({ or: "redirect" });

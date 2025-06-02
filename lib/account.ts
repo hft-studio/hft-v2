@@ -5,7 +5,6 @@ import { CdpClient, EvmSmartAccount } from '@coinbase/cdp-sdk';
 import { bundlerClient } from './clients';
 import { TransactionReceipt } from 'viem';
 
-// Initialize the CDP client with explicit options
 const cdpClient = new CdpClient({
     apiKeyId: process.env.CDP_API_KEY_ID,
     apiKeySecret: process.env.CDP_API_KEY_SECRET,

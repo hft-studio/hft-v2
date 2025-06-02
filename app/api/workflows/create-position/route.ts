@@ -1,17 +1,16 @@
 import { getAccount } from "@/lib/account";
 import { balanceAssets, depositInPool, depositInGauge } from "./user-ops";
-import { ethers } from "ethers";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { sellAsset } from "@/lib/swap";
 import { getRawBalance } from "@/lib/erc20";
 import {
-	getStakedBalance,
 	withdrawFromPool,
 } from "../withdraw-position/user-ops";
-import { getUnstakedBalance } from "../withdraw-position/user-ops";
 import { withdrawFromGauge } from "../withdraw-position/user-ops";
 import { getPoolData } from "@/lib/pools";
+import { getUnstakedBalance } from "../withdraw-position/utils";
+import { getStakedBalance } from "../withdraw-position/utils";
 const API_KEY = process.env.WORKFLOW_API_KEY;
 if (!API_KEY) {
 	throw new Error("WORKFLOW_API_KEY is not defined");
@@ -70,7 +69,6 @@ export async function POST(request: NextRequest) {
 			gaugeDepositTxHash: gaugeDepositReceipt.transactionHash,
 		});
 	} catch (error) {
-		console.error("Error creating position:", error);
 		const stakedBalance = await getStakedBalance(input.poolId, smartAccount);
 		if (stakedBalance > BigInt(0)) {
 			const withdrawFromGaugeReceipt = await withdrawFromGauge({
@@ -121,6 +119,7 @@ export async function POST(request: NextRequest) {
 				return soldAsset;
 			}),
 		);
+		console.error("Error creating position:", error);
 		return NextResponse.json(
 			{
 				error: (error as Error).message || "Failed to create position",
