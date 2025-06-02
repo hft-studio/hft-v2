@@ -1,7 +1,7 @@
 "use client";
 
 import { StackProvider, StackTheme } from "@stackframe/stack";
-import { stackClientApp } from "@/app/lib/stack.client";
+import { stackClientApp } from "@/lib/stack/stack.client";
 import { ThemeProvider } from "next-themes";
 
 export function Providers({ children }: { children: React.ReactNode }) {
