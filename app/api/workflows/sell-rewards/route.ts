@@ -8,6 +8,7 @@ import { sellAsset } from "@/lib/swap";
 import { getToken } from "@/lib/tokens";
 import { NextResponse } from "next/server";
 import { publicClient } from "@/lib/clients";
+import { erc20Abi } from "viem";
 
 interface SellRewardsBody {
 	userId: string;
@@ -41,15 +42,7 @@ export const POST = async (request: NextRequest) => {
 
 	const rewardTokenAmount = await readContract(publicClient, {
 		address: rewardToken.address as `0x${string}`,
-		abi: [
-			{
-				inputs: [{ name: "account", type: "address" }],
-				name: "balanceOf",
-				outputs: [{ name: "", type: "uint256" }],
-				stateMutability: "view",
-				type: "function",
-			},
-		],
+		abi: erc20Abi,
 		functionName: "balanceOf",
 		args: [smartAccount.address],
 	});
@@ -60,6 +53,5 @@ export const POST = async (request: NextRequest) => {
 			amount: rewardTokenAmount.toString(),
 		},
 	});
-	console.log("sellAssetResponse", sellAssetResponse);
-	return new Response("OK", { status: 200 });
+	return new Response(JSON.stringify(sellAssetResponse), { status: 200 });
 };

@@ -2,7 +2,8 @@ import type { EvmSmartAccount } from "@coinbase/cdp-sdk";
 import { getPoolData } from "@/lib/pools";
 import { cdpClient, bundlerClient, publicClient } from "@/lib/clients";
 import { readContract } from "viem/actions";
-import { encodeFunctionData } from "viem";
+import { encodeFunctionData, erc20Abi } from "viem";
+import { executeTransactionWithRetries } from "@/lib/account";
 
 export const withdrawFromPool = async ({
     poolId,
@@ -34,7 +35,8 @@ export const withdrawFromPool = async ({
             }],
             functionName: "approve",
             args: [poolData.swapExchangeData?.swap_address as `0x${string}`, unstakedBalance]
-        })
+        }),
+        value: BigInt(0)
     }]
 
     const removeLiquidityCalls = [{
@@ -70,19 +72,11 @@ export const withdrawFromPool = async ({
                 smartAccount.address,
                 BigInt(Math.floor(Date.now() / 1000) + 3600)
             ]
-        })
+        }),
+        value: BigInt(0)
     }]
 
-    const withdrawFromPoolOperation = await cdpClient.evm.sendUserOperation({
-        smartAccount: smartAccount,
-        network: 'base',
-        calls: [...approveCalls, ...removeLiquidityCalls],
-        paymasterUrl: process.env.PAYMASTER_URL,
-    });
-
-    const withdrawFromPoolReceipt = await bundlerClient.waitForUserOperationReceipt({
-        hash: withdrawFromPoolOperation.userOpHash
-    });
+    const withdrawFromPoolReceipt = await executeTransactionWithRetries(smartAccount, [...approveCalls, ...removeLiquidityCalls]);
 
     return withdrawFromPoolReceipt;
 }
@@ -102,13 +96,7 @@ export const getUnstakedBalance = async ({
         publicClient,
         {
             address: poolData.address as `0x${string}`,
-            abi: [{
-                inputs: [{ name: "account", type: "address" }],
-                name: "balanceOf",
-                outputs: [{ name: "", type: "uint256" }],
-                stateMutability: "view",
-                type: "function"
-            }],
+            abi: erc20Abi,
             functionName: "balanceOf",
             args: [smartAccount.address]
         }
@@ -146,16 +134,7 @@ export const withdrawFromGauge = async ({
         }),
         value: BigInt(0)
     }]
-    const withdrawFromGaugeOperation = await cdpClient.evm.sendUserOperation({
-        smartAccount: smartAccount,
-        network: 'base',
-        calls: calls,
-        paymasterUrl: process.env.PAYMASTER_URL,
-    });
-
-    const withdrawFromGaugeReceipt = await bundlerClient.waitForUserOperationReceipt({
-        hash: withdrawFromGaugeOperation.userOpHash
-    });
+    const withdrawFromGaugeReceipt = await executeTransactionWithRetries(smartAccount, calls);
     return withdrawFromGaugeReceipt;
 }
 

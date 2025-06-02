@@ -7,14 +7,13 @@ import type {
 import { TradeType, CurrencyAmount, Percent, Token } from "@uniswap/sdk-core";
 import type { EvmSmartAccount } from "@coinbase/cdp-sdk";
 import { buildApproveCalls } from "./erc20";
-import { alchemyProvider, bundlerClient, cdpClient } from "./clients";
+import { alchemyProvider } from "./clients";
 import { getTokenAmountFromSwapReceipt } from "@/app/api/workflows/create-position/utils";
 import { db } from "@/db";
 import { eq } from "drizzle-orm";
 import { tokensTable } from "@/db/schema";
 import { getToken } from "./tokens";
-import { writeFile } from "fs/promises";
-import { stringifyReceipt } from "./utils";
+import { executeTransactionWithRetries } from "./account";
 
 type TokenData = typeof tokensTable.$inferSelect;
 
@@ -124,26 +123,10 @@ export async function sellAsset(params: {
 		tokenOut: usdcToken,
 		amount: BigInt(params.asset.amount)
 	});
-	console.log("swapCalls", swapCalls);
-	const swapOperation = await cdpClient.evm.sendUserOperation({
-		smartAccount: params.smartAccount,
-		network: 'base',
-		calls: swapCalls,
-		paymasterUrl: process.env.PAYMASTER_URL,
-	});
-	console.log("swapOperation", swapOperation);
-	const swapReceipt = await bundlerClient.waitForUserOperationReceipt({
-		hash: swapOperation.userOpHash
-	});
-	if (!swapReceipt.success) {
-		console.error("swap reverted receipt", swapReceipt);
-		console.error("swap reverted operation", swapOperation);
+	const swapReceipt = await executeTransactionWithRetries(params.smartAccount, swapCalls);
+	if (swapReceipt.status !== 'success') {
 		throw new Error("Swap reverted");
 	}
-	await writeFile(
-		`./swap-receipt-${swapOperation.userOpHash}.json`,
-		stringifyReceipt(swapReceipt)
-	);
 
 	const amount = await getTokenAmountFromSwapReceipt(swapReceipt, usdcToken.address as `0x${string}`, usdcToken.decimals as number);
 	return {

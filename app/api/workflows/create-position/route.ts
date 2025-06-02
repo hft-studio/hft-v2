@@ -67,7 +67,7 @@ export async function POST(request: NextRequest) {
 			successful: true,
 			lpTokenAmount: amount.toString(),
 			lpTokenAddress,
-			gaugeDepositTxHash: gaugeDepositReceipt.userOpHash,
+			gaugeDepositTxHash: gaugeDepositReceipt.transactionHash,
 		});
 	} catch (error) {
 		console.error("Error creating position:", error);

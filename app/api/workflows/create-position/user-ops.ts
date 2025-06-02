@@ -7,13 +7,13 @@ import { buildApproveCalls } from "@/lib/erc20";
 import type { EvmSmartAccount } from "@coinbase/cdp-sdk";
 import { eq } from "drizzle-orm";
 import { encodeFunctionData } from "viem";
-import { bundlerClient, cdpClient } from "@/lib/clients";
 import { getToken } from "@/lib/tokens";
 import {
 	getTokenAmountFromSwapReceipt,
 	extractLpTokenInfoFromReceipt,
 } from "./utils";
 import { ethers } from "ethers";
+import { executeTransactionWithRetries } from "@/lib/account";
 
 export async function balanceAssets(params: {
 	poolId: number;
@@ -83,15 +83,7 @@ export async function buyAsset(params: {
 		tokenOut,
 		amount: params.usdcAmount,
 	});
-	const swapOperation = await cdpClient.evm.sendUserOperation({
-		smartAccount: params.smartAccount,
-		network: "base",
-		calls: calls,
-		paymasterUrl: process.env.PAYMASTER_URL,
-	});
-	const receipt = await bundlerClient.waitForUserOperationReceipt({
-		hash: swapOperation.userOpHash,
-	});
+	const receipt = await executeTransactionWithRetries(params.smartAccount, calls);
 	const amount = await getTokenAmountFromSwapReceipt(
 		receipt,
 		tokenOut.address,
@@ -170,16 +162,7 @@ export async function depositInPool(params: {
 		}),
 	};
 
-	const approveOperation = await cdpClient.evm.sendUserOperation({
-		smartAccount: params.smartAccount,
-		network: "base",
-		calls: [...approveCalls, depositCall],
-		paymasterUrl: process.env.PAYMASTER_URL,
-	});
-
-	const receipt = await bundlerClient.waitForUserOperationReceipt({
-		hash: approveOperation.userOpHash,
-	});
+	const receipt = await executeTransactionWithRetries(params.smartAccount, [...approveCalls, depositCall]);
 
 	const { lpTokenAddress, lpTokenAmount } = extractLpTokenInfoFromReceipt(
 		receipt,
@@ -187,7 +170,7 @@ export async function depositInPool(params: {
 	);
 
 	return {
-		txHash: approveOperation.userOpHash,
+		txHash: receipt.transactionHash,
 		amount: lpTokenAmount || BigInt(0),
 		lpTokenAddress: lpTokenAddress as `0x${string}`,
 	};
@@ -221,16 +204,6 @@ export async function depositInGauge(params: {
 		}),
 	};
 
-	const depositOperation = await cdpClient.evm.sendUserOperation({
-		smartAccount: params.smartAccount,
-		network: "base",
-		calls: [approveCall, depositCall],
-		paymasterUrl: process.env.PAYMASTER_URL,
-	});
-
-	const depositReceipt = await bundlerClient.waitForUserOperationReceipt({
-		hash: depositOperation.userOpHash,
-	});
-
-	return depositReceipt;
+	const receipt = await executeTransactionWithRetries(params.smartAccount, [approveCall, depositCall]);
+	return receipt;
 }

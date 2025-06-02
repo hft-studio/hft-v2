@@ -1,7 +1,9 @@
 import { wallets } from '../db/schema';
 import { db } from '../db';
 import { eq } from 'drizzle-orm';
-import { CdpClient } from '@coinbase/cdp-sdk';
+import { CdpClient, EvmSmartAccount } from '@coinbase/cdp-sdk';
+import { bundlerClient } from './clients';
+import { TransactionReceipt } from 'viem';
 
 // Initialize the CDP client with explicit options
 const cdpClient = new CdpClient({
@@ -13,10 +15,10 @@ const cdpClient = new CdpClient({
 export async function getAccount(userId: string) {
     try {
         if (!userId) {
-           return {
-            owner: null,
-            smartAccount: null
-           }
+            return {
+                owner: null,
+                smartAccount: null
+            }
         }
         const accountData = await
             db.select().from(wallets)
@@ -76,3 +78,46 @@ export async function createSmartAccount(userId: string) {
         throw error;
     }
 }
+
+export const executeTransactionWithRetries = async (
+    smartAccount: EvmSmartAccount,
+    calls: {
+        to: `0x${string}`;
+        value: bigint;
+        data: `0x${string}`;
+    }[],
+    retries: number = 5,
+    baseDelayMs: number = 1000
+): Promise<TransactionReceipt> => {
+    const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+    let lastReceipt: TransactionReceipt | null = null;
+
+    for (let i = 0; i < retries; i++) {
+        try {
+            const userOp = await cdpClient.evm.sendUserOperation({
+                smartAccount: smartAccount,
+                network: 'base',
+                calls: calls,
+                paymasterUrl: process.env.PAYMASTER_URL,
+            });
+            const userOpReceipt = await bundlerClient.waitForUserOperationReceipt({
+                hash: userOp.userOpHash,
+            });
+            lastReceipt = userOpReceipt.receipt;
+            if (userOpReceipt.success) {
+                return userOpReceipt.receipt;
+            }
+        } catch (error) {
+            if (i < retries - 1) {
+                const delayMs = baseDelayMs * Math.pow(2, i);
+                await delay(delayMs);
+                continue;
+            }
+        }
+    }
+
+    if (lastReceipt) {
+        return lastReceipt;
+    }
+    throw new Error('All retries failed and no receipt was obtained');
+};
