@@ -2,6 +2,10 @@ import { exchangesTable, networksTable, poolsTable, tokensTable, wallets } from 
 import { db } from "./index";
 
 async function main() {
+    await db.delete(poolsTable);
+    await db.delete(networksTable);
+    await db.delete(exchangesTable);
+    await db.delete(tokensTable);
 
     const tokensResult = await db.insert(tokensTable).values([
         {
@@ -24,10 +28,17 @@ async function main() {
             chain_id: 8453,
             decimals: 18,
             product_id: 'AERO-USD'
+        },
+        {
+            address: '0x4200000000000000000000000000000000000006',
+            symbol: 'WETH',
+            chain_id: 8453,
+            decimals: 18,
+            product_id: 'WETH-USD'
         }
     ]).returning({ id: tokensTable.id });
 
-    const [usdcId, cbBtcId, aerodromeId] = tokensResult.map(token => token.id);
+    const [usdcId, cbBtcId, aerodromeId, wethId] = tokensResult.map(token => token.id);
 
     const exchangeResult = await db.insert(exchangesTable).values([
         {
@@ -70,14 +81,38 @@ async function main() {
             reserve1_usd: 0,
             volume: 0,
             updated_at: new Date()
-        }
-    ]);
-
-    const walletsResult = await db.insert(wallets).values([
+        },
         {
-            owner_address: "0xf498fc1C0a4bE34EC07a9fCe563D87e0dB434a3E",
-            smart_account_address: "0x7fe9A7DE2466475C3389f2cCBd056D822594DE5D",
-            user_id: "c064667a-bb9f-4e10-afd6-0c2efd1fbfe2",
+            address: '0xcDAC0d6c6C59727a65F871236188350531885C43',
+            symbol: 'vAMM-WETH/USDC',
+            is_stable: false,
+            exchange_id: exchangeId,
+            token0: usdcId,
+            token1: wethId,
+            network_id: networkId,
+            gauge_address: "0xEDC76895e053A9bbAC456B5a9c5B49144eee0080",
+            apr: 0,
+            tvl: 0,
+            reserve0_usd: 0,
+            reserve1_usd: 0,
+            volume: 0,
+            updated_at: new Date()
+        },
+        {
+            address: '0x6cDcb1C4A4D1C3C6d054b27AC5B77e89eAFb971d',
+            symbol: 'vAMM-USDC/AERO',
+            is_stable: false,
+            exchange_id: exchangeId,
+            token0: usdcId,
+            token1: aerodromeId,
+            network_id: networkId,
+            gauge_address: "0xEDC76895e053A9bbAC456B5a9c5B49144eee0080",
+            apr: 0,
+            tvl: 0,
+            reserve0_usd: 0,
+            reserve1_usd: 0,
+            volume: 0,
+            updated_at: new Date()
         }
     ]);
 }
