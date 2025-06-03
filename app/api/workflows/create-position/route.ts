@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
 			smartAccount: smartAccount,
 		});
 		step = 1;
-		const { amount, lpTokenAddress } = await depositInPool({
+		const depositInPoolReceipt = await depositInPool({
 			poolId: input.poolId,
 			assets: assets,
 			smartAccount: smartAccount,
@@ -57,15 +57,11 @@ export async function POST(request: NextRequest) {
 		step = 2;
 		const gaugeDepositReceipt = await depositInGauge({
 			poolId: input.poolId,
-			lpTokenAmount: amount,
-			lpTokenAddress: lpTokenAddress,
 			smartAccount: smartAccount,
 		});
 		step = 3;
 		return NextResponse.json({
 			successful: true,
-			lpTokenAmount: amount.toString(),
-			lpTokenAddress,
 			gaugeDepositTxHash: gaugeDepositReceipt.transactionHash,
 		});
 	} catch (error) {

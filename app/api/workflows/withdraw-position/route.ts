@@ -33,13 +33,13 @@ export const POST = async (req: NextRequest) => {
 			smartAccount: smartAccount,
 			unstakedBalance: unstakedBalance,
 		});
-		const token0Amount = await getReceivedTokenAmount(
+		const token0Amount = getReceivedTokenAmount(
 			withdrawFromPoolReceipt,
 			smartAccount.address,
 			poolData?.token0Data.address as `0x${string}`,
 			poolData?.token0Data.decimals as number,
 		);
-		const token1Amount = await getReceivedTokenAmount(
+		const token1Amount = getReceivedTokenAmount(
 			withdrawFromPoolReceipt,
 			smartAccount.address,
 			poolData?.token1Data.address as `0x${string}`,

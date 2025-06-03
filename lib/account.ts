@@ -85,7 +85,7 @@ export const executeTransactionWithRetries = async (
         value: bigint;
         data: `0x${string}`;
     }[],
-    retries: number = 5,
+    retries: number = 3,
     baseDelayMs: number = 1000
 ): Promise<TransactionReceipt> => {
     const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
@@ -114,7 +114,7 @@ export const executeTransactionWithRetries = async (
             }
         }
     }
-
+    
     if (lastReceipt) {
         return lastReceipt;
     }

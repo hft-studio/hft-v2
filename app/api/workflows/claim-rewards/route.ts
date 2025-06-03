@@ -1,8 +1,7 @@
-import { getAccount } from "@/lib/account";
+import { executeTransactionWithRetries, getAccount } from "@/lib/account";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { buildClaimCalls, calculateTotalEarnedInUSD } from "./utils";
-import { cdpClient, bundlerClient } from "@/lib/clients";
 import { sellAsset } from "@/lib/swap";
 import { getTokenBySymbol } from "@/lib/tokens";
 import { getRawBalance, transfer } from "@/lib/erc20";
@@ -43,6 +42,7 @@ export async function POST(request: NextRequest) {
 		walletAddress as `0x${string}`,
 	);
 	if (totalEarned < 5) {
+		console.log("totalEarned is less than 5", totalEarned);
 		return NextResponse.json({ success: true, message: "Ballance is too low" });
 	}
 	const calls = await buildClaimCalls(
@@ -50,15 +50,7 @@ export async function POST(request: NextRequest) {
 		earningsArray,
 	);
 	if (calls.length > 0) {
-		const result = await cdpClient.evm.sendUserOperation({
-			smartAccount: smartAccount,
-			network: "base",
-			calls: calls,
-			paymasterUrl: process.env.PAYMASTER_URL,
-		});
-		const receipt = await bundlerClient.waitForUserOperationReceipt({
-			hash: result.userOpHash,
-		});
+		const receipt = await executeTransactionWithRetries(smartAccount, calls);
 		const token = await getTokenBySymbol("AERO");
 		const balance = await getRawBalance(
 			token.address as `0x${string}`,

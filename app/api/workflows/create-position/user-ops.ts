@@ -6,14 +6,14 @@ import { ADD_LIQUIDITY_ABI, GAUGE_DEPOSIT_ABI } from "./types";
 import { buildApproveCalls } from "@/lib/erc20";
 import type { EvmSmartAccount } from "@coinbase/cdp-sdk";
 import { eq } from "drizzle-orm";
-import { encodeFunctionData } from "viem";
+import { encodeFunctionData, erc20Abi } from "viem";
 import { getToken } from "@/lib/tokens";
 import {
 	getTokenAmountFromSwapReceipt,
-	extractLpTokenInfoFromReceipt,
 } from "./utils";
 import { ethers } from "ethers";
 import { executeTransactionWithRetries } from "@/lib/account";
+import { publicClient } from "@/lib/clients";
 
 export async function balanceAssets(params: {
 	poolId: number;
@@ -60,8 +60,8 @@ export async function balanceAssets(params: {
 			});
 		}
 	}
-    const rawAssets = assets.map((asset) => ({
-        tokenId: asset.tokenId ?? 0,
+	const rawAssets = assets.map((asset) => ({
+		tokenId: asset.tokenId ?? 0,
 		amount: BigInt(
 			asset.amount.toString() === "0x" ? "0" : asset.amount.toString(),
 		),
@@ -83,6 +83,7 @@ export async function buyAsset(params: {
 		tokenOut,
 		amount: params.usdcAmount,
 	});
+
 	const receipt = await executeTransactionWithRetries(params.smartAccount, calls);
 	const amount = await getTokenAmountFromSwapReceipt(
 		receipt,
@@ -164,31 +165,28 @@ export async function depositInPool(params: {
 
 	const receipt = await executeTransactionWithRetries(params.smartAccount, [...approveCalls, depositCall]);
 
-	const { lpTokenAddress, lpTokenAmount } = extractLpTokenInfoFromReceipt(
-		receipt,
-		params.smartAccount.address,
-	);
-
-	return {
-		txHash: receipt.transactionHash,
-		amount: lpTokenAmount || BigInt(0),
-		lpTokenAddress: lpTokenAddress as `0x${string}`,
-	};
+	return receipt;
 }
 
 export async function depositInGauge(params: {
 	poolId: number;
-	lpTokenAmount: bigint;
 	smartAccount: EvmSmartAccount;
-	lpTokenAddress?: string;
 }) {
 	const poolData = await getPoolData(params.poolId);
+	const lpTokenAddress = poolData?.address;
+	const lpTokenAmount = await publicClient.readContract({
+		address: lpTokenAddress as `0x${string}`,
+		abi: erc20Abi,
+		functionName: "balanceOf",
+		args: [params.smartAccount.address],
+	});
+	
 
 	const [approveCall] = buildApproveCalls({
 		tokens: [
 			{
-				address: params.lpTokenAddress as `0x${string}`,
-				amount: params.lpTokenAmount,
+				address: lpTokenAddress as `0x${string}`,
+				amount: lpTokenAmount,
 			},
 		],
 		spenderAddress: poolData?.gauge_address as `0x${string}`,
@@ -200,7 +198,7 @@ export async function depositInGauge(params: {
 		data: encodeFunctionData({
 			abi: GAUGE_DEPOSIT_ABI,
 			functionName: "deposit",
-			args: [params.lpTokenAmount],
+			args: [lpTokenAmount],
 		}),
 	};
 
