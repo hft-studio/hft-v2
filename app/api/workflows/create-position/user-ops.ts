@@ -182,7 +182,6 @@ export async function depositInGauge(params: {
 		functionName: "balanceOf",
 		args: [params.smartAccount.address],
 	});
-	
 
 	const [approveCall] = buildApproveCalls({
 		tokens: [
@@ -203,7 +202,6 @@ export async function depositInGauge(params: {
 			args: [lpTokenAmount],
 		}),
 	};
-
 	const receipt = await executeTransactionWithRetries(params.smartAccount, [approveCall, depositCall]);
 	return receipt;
 }
