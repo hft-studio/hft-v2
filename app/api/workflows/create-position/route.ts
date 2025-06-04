@@ -48,18 +48,15 @@ export async function POST(request: NextRequest) {
 			usdcAmount: input.usdcAmount.toString(),
 			smartAccount: smartAccount,
 		});
-		step = 1;
 		const depositInPoolReceipt = await depositInPool({
 			poolId: input.poolId,
 			assets: assets,
 			smartAccount: smartAccount,
 		});
-		step = 2;
 		const gaugeDepositReceipt = await depositInGauge({
 			poolId: input.poolId,
 			smartAccount: smartAccount,
 		});
-		step = 3;
 		return NextResponse.json({
 			successful: true,
 			gaugeDepositTxHash: gaugeDepositReceipt.transactionHash,
@@ -115,7 +112,6 @@ export async function POST(request: NextRequest) {
 				return soldAsset;
 			}),
 		);
-		console.error("Error creating position:", error);
 		return NextResponse.json(
 			{
 				error: (error as Error).message || "Failed to create position",
