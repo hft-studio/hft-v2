@@ -7,7 +7,7 @@ import { buildApproveCalls } from "@/lib/erc20";
 import type { EvmSmartAccount } from "@coinbase/cdp-sdk";
 import { eq } from "drizzle-orm";
 import { encodeFunctionData, erc20Abi } from "viem";
-import { getToken } from "@/lib/tokens";
+import { getToken, getTokenBySymbol } from "@/lib/tokens";
 import {
 	getTokenAmountFromSwapReceipt,
 } from "./utils";
@@ -40,13 +40,14 @@ export async function balanceAssets(params: {
 		throw new Error("Pool not found");
 	}
 	const amountToBuy = rawUsdcAmount / BigInt(2);
+	const tokenIn = await getTokenBySymbol('USDC');
 	const assets = [];
 	for (const token of tokens) {
 		if (token?.symbol !== "USDC") {
 			const rawAmount = await buyAsset({
 				usdcAmount: amountToBuy,
 				smartAccount: params.smartAccount,
-				tokenIn: 1,
+				tokenIn: tokenIn.id,
 				tokenOut: token.id,
 			});
 			assets.push({
@@ -77,6 +78,7 @@ export async function buyAsset(params: {
 }) {
 	const tokenIn = await getToken(params.tokenIn);
 	const tokenOut = await getToken(params.tokenOut);
+
 	const calls = await buildSwapCalls({
 		smartAccount: params.smartAccount,
 		tokenIn,

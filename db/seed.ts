@@ -34,7 +34,7 @@ async function main() {
             symbol: 'WETH',
             chain_id: 8453,
             decimals: 18,
-            product_id: 'WETH-USD'
+            product_id: 'ETH-USD'
         }
     ]).returning({ id: tokensTable.id });
 
@@ -63,8 +63,6 @@ async function main() {
 
     const networkId = networkResult[0].id;
 
-
-
     const poolsResult = await db.insert(poolsTable).values([
         {
             address: '0x9c38b55f9A9Aba91BbCEDEb12bf4428f47A6a0B8',
@@ -83,14 +81,14 @@ async function main() {
             updated_at: new Date()
         },
         {
-            address: '0xcDAC0d6c6C59727a65F871236188350531885C43',
+            address: '0x519BBD1Dd8C6A94C46080E24f316c14Ee758C025',
             symbol: 'vAMM-WETH/USDC',
             is_stable: false,
             exchange_id: exchangeId,
             token0: usdcId,
             token1: wethId,
             network_id: networkId,
-            gauge_address: "0xEDC76895e053A9bbAC456B5a9c5B49144eee0080",
+            gauge_address: "0x4F09bAb2f0E15e2A078A227FE1537665F55b8360",
             apr: 0,
             tvl: 0,
             reserve0_usd: 0,
@@ -106,7 +104,7 @@ async function main() {
             token0: usdcId,
             token1: aerodromeId,
             network_id: networkId,
-            gauge_address: "0xEDC76895e053A9bbAC456B5a9c5B49144eee0080",
+            gauge_address: "0x519BBD1Dd8C6A94C46080E24f316c14Ee758C025",
             apr: 0,
             tvl: 0,
             reserve0_usd: 0,

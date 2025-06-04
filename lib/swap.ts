@@ -12,7 +12,7 @@ import { getTokenAmountFromSwapReceipt } from "@/app/api/workflows/create-positi
 import { db } from "@/db";
 import { eq } from "drizzle-orm";
 import { tokensTable } from "@/db/schema";
-import { getToken } from "./tokens";
+import { getTokenBySymbol } from "./tokens";
 import { executeTransactionWithRetries } from "./account";
 
 type TokenData = typeof tokensTable.$inferSelect;
@@ -51,7 +51,6 @@ export async function generateRoute(params: {
 		deadline: Math.floor(Date.now() / 1000 + 1800),
 		type: SwapType.SWAP_ROUTER_02,
 	};
-
 	const route = await router.route(
 		CurrencyAmount.fromRawAmount(tokenInToken, rawAmount),
 		tokenOutToken,
@@ -103,7 +102,7 @@ export async function sellAsset(params: {
 	};
 }) {
 
-	const usdcToken = await getToken(1);
+	const usdcToken = await getTokenBySymbol('USDC');
 	if (params.asset.address.toLowerCase() === usdcToken.address.toLowerCase()) {
 		return {
 			usdcAmount: params.asset.amount,
