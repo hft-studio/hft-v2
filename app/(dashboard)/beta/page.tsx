@@ -1,6 +1,5 @@
 import { Navbar } from "@/app/components/navbar";
 import { Typography } from "@/components/ui/typography";
-import { Button } from "@/components/ui/button";
 import { redirect } from "next/navigation";
 import { db } from "@/db";
 import { betaSignUpsTable } from "@/db/schema/domain";
