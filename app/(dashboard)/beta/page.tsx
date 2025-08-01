@@ -1,48 +1,10 @@
 import { Navbar } from "@/app/components/navbar";
-import { redirect } from "next/navigation";
-import { db } from "@/db";
-import { betaSignUpsTable } from "@/db/schema/domain";
-import { stackServerApp } from "@/lib/stack/stack.server";
-import { eq } from "drizzle-orm";
-import { BetaSignupForm } from "./beta-signup-form";
-import { getAccount } from "@/lib/account";
-import { getUsdcAvailable } from "../explore/utils";
-import { Lightning } from "@/components/lightning";
-import { MagicLinkSignIn } from "@/app/components/sign-in-component";
 import PageClient from "./page-client";
 
-export default async function BetaPage({
-    searchParams,
-}: {
-    searchParams: Promise<{ success?: string }>;
-}) {
-    // const user = await stackServerApp.getUser({ or: "redirect" });
-    // if (!user) {
-    //     redirect("/handler/sign-in");
-    // }
-    // const betaSignUp = await db.select().from(betaSignUpsTable).where(eq(betaSignUpsTable.user_id, user.id));
-    const params = await searchParams;
-    //const account = await getAccount(user.id);
-
-    // const usdcAvailable = await getUsdcAvailable(
-    // 	account?.smartAccount?.address as `0x${string}`,
-    // );
-    // const handleSignUp = async () => {
-    //     "use server";
-    //     await db.insert(betaSignUpsTable).values({
-    //         user_id: user.id,
-    //         created_at: new Date(),
-    //     });
-    //     redirect("/beta?success=true");
-    // }
-
+export default async function BetaPage() {
     return (
         <div className="relative min-h-screen bg-black text-white">
             <Navbar userData={undefined} showTabs={false} showWallet={false} />
-            
-           
-            
-            {/* Content overlaid on lightning */}
             <PageClient />  
         </div>
     );

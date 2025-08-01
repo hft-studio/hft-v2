@@ -1,16 +1,14 @@
-import { RewardsContent } from "./rewards-content";
+// import { RewardsContent } from "./rewards-content";
 import { redirect } from "next/navigation";
-import { getAccount } from "@/lib/account";
-import { getUsdcAvailable } from "../explore/utils";
-import { Social } from "@/app/components/social";
-import { ContentContainer } from "@/components/layout/content-container";
-import { Navbar } from "@/app/components/navbar";
-import { stackServerApp } from "@/lib/stack/stack.server";
+// import { getAccount } from "@/lib/account";
+// import { getUsdcAvailable } from "../explore/utils";
+// import { Social } from "@/app/components/social";
+// import { ContentContainer } from "@/components/layout/content-container";
+// import { Navbar } from "@/app/components/navbar";
 
 export default async function Rewards() {
 	redirect("/beta");
 
-	// const user = await stackServerApp.getUser({ or: "redirect" });
 
 	// const { smartAccount } = await getAccount(user.id);
 	// if (!smartAccount) {

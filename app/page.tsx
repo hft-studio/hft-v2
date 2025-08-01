@@ -1,5 +1,4 @@
 import { Lightning } from "@/components/lightning";
-import { redirect } from "next/navigation";
 import { Navbar } from "./components/navbar";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -8,7 +7,7 @@ export default async function Home() {
 
   return (
     <div>
-      <Navbar userData={undefined} showTabs={false} showWallet={false} showSignOut={false} showSignIn={true} />
+      <Navbar userData={undefined} showTabs={false} showWallet={false} />
       <div className="absolute inset-0 z-0">
         <Lightning
           hue={220}

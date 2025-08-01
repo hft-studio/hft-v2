@@ -1,7 +1,5 @@
 "use client";
 
-import { StackProvider, StackTheme } from "@stackframe/stack";
-import { stackClientApp } from "@/lib/stack/stack.client";
 import { ThemeProvider } from "next-themes";
 import { CDPHooksProvider } from "@coinbase/cdp-hooks";
 
@@ -14,15 +12,13 @@ if (!projectId) {
 export function Providers({ children }: { children: React.ReactNode }) {
 	return (
 		<ThemeProvider defaultTheme="dark" attribute="class">
-			<StackProvider app={stackClientApp}>
 				<CDPHooksProvider 
 					config={{
 						projectId: projectId as string
 					}}
 				>
-					<StackTheme>{children}</StackTheme>
+					{children}
 				</CDPHooksProvider>
-			</StackProvider>
 		</ThemeProvider>
 	);
 }
