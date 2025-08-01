@@ -13,7 +13,6 @@ import { useRouter } from "next/navigation";
 import { useOfframp } from "@/hooks/use-offramp";
 import { useOnramp } from "@/hooks/use-onramp";
 import useSWR from "swr";
-import { Typography } from "@/components/ui/typography";
 import { LogOut } from "lucide-react";
 import { useUser } from "@stackframe/stack";
 
@@ -31,7 +30,7 @@ function Item(props: { text: string, icon: React.ReactNode, onClick: () => void 
 	  <DropdownMenuItem onClick={() => props.onClick()}>
 		<div className="flex gap-2 items-center">
 		  {props.icon}
-		  <Typography>{props.text}</Typography>
+		  <span>{props.text}</span>
 		</div>
 	  </DropdownMenuItem>
 	);
@@ -41,7 +40,7 @@ function DropdownMenuLabel(props: { text: string, icon: React.ReactNode }) {
 	return (
 		<div className="flex gap-2 items-center">
 			{props.icon}	
-			<Typography>{props.text}</Typography>
+			<span>{props.text}</span>
 		</div>
 	);
 }

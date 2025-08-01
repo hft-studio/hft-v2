@@ -4,13 +4,9 @@ import { db } from "@/db";
 import { betaSignUpsTable } from "@/db/schema/domain";
 import { stackServerApp } from "@/lib/stack/stack.server";
 import { eq } from "drizzle-orm";
-import { BetaSignupForm } from "./beta-signup-form";
-import { getAccount } from "@/lib/account";
-import { getUsdcAvailable } from "../explore/utils";
-import { Lightning } from "@/components/lightning";
 import { MagicLinkSignIn } from "@/app/components/sign-in-component";
-import PageClient from "./page-client";
-
+import Image from "next/image";
+import PageClient from "./page-clientt";
 export default async function BetaPage({
     searchParams,
 }: {
@@ -38,12 +34,12 @@ export default async function BetaPage({
 
     return (
         <div className="relative min-h-screen bg-black text-white">
-            <Navbar userData={undefined} showTabs={false} showWallet={false} />
+            {/* Navbar */}
+            <Navbar showTabs={false} showWallet={false} showAuth={false} />
+
+            <PageClient />
+            {/* Main Content */}
             
-           
-            
-            {/* Content overlaid on lightning */}
-            <PageClient />  
         </div>
     );
 }
